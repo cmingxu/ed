@@ -11,9 +11,9 @@ struct config{
   // 延时点数
   uint32_t delayCount;
   // 重复次数
-  uint32_t repeatCount;
+  uint16_t repeatCount;
   // 降采样点数
-  uint32_t sampleCount2;
+  uint16_t sampleCount2;
   // 本机IP地址
   int32_t localIp;
   // 本机UDP端口地址
@@ -23,12 +23,13 @@ struct config{
   // 设备端口地址
   unsigned int devicePort;
 
-  short ADChannel;
-  short ADBit;
+  short ad_channel;
+  short ad_bit;
   short trigger;
+  short outer_trigger;
 
   // log file fd, default stdout
-  int log_file_fd;
+  FILE* log_file;
   int socket;
   bool cache_enabled;
 };
@@ -53,8 +54,8 @@ config_t* g_config;
 #define TRIGGER_DOWN 1
 
 // 外触发边沿，无符号，1Byte，默认 0(0x0:下降沿，0x1:上升沿);
-#define OUTTER_TRIGGER_UP 0
-#define OUTTER_TRIGGER_DOWN 1
+#define OUTER_TRIGGER_DOWN 0
+#define OUTER_TRIGGER_UP 1
 
 
 #define CONNECT_SUCCESS 0
@@ -102,4 +103,11 @@ void stop_recv();
 // 重新开始数据接收
 void restart_recv();
 
+
+#define LOG(fmt, ...) do {	\
+		fprintf(g_config->log_file, "[LOG] %s:%d: " fmt "\n", __FUNCTION__,__LINE__, __VA_ARGS__); \
+		fflush(g_config->log_file); \
+} while(0)
+ 
+#define ED_LOG( fmt, ... ) LOG(fmt,__VA_ARGS__ )
 #endif

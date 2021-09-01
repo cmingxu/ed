@@ -4,7 +4,7 @@
 #include "ed.h"
 
 static const char *defaultLocalIP = "192.1.1.1";
-static const char *defaultDeviceIP = "192.1.1.2";
+static const char *defaultDeviceIP = "192.168.1.41";
 
 static int32_t ip_to_int(const char*);
 
@@ -18,10 +18,10 @@ config_t *create_default_config() {
     return g_config;
   }
   g_config = (config_t*)ptr;
-  g_config->sampleCount = 100;
-  g_config->delayCount = 100;
-  g_config->repeatCount = 100;
-  g_config->sampleCount2 = 100;
+  g_config->sampleCount = 1000000;
+  g_config->delayCount = 320000;
+  g_config->repeatCount = 3;
+  g_config->sampleCount2 = 2;
 
   g_config->localIp = ip_to_int(defaultLocalIP);
   g_config->localPort = 5000;
@@ -29,12 +29,13 @@ config_t *create_default_config() {
   g_config->deviceIp = ip_to_int(defaultDeviceIP);
   g_config->devicePort = 5000;
 
-  g_config->ADChannel = ADCHANNEL_SINGLE;
-  g_config->ADBit = ADBIT_12;
+  g_config->ad_channel = ADCHANNEL_SINGLE;
+  g_config->ad_bit = ADBIT_12;
   g_config->trigger = TRIGGER_UP;
+  g_config->outer_trigger = OUTER_TRIGGER_UP;
 
   // default set to stdout
-  g_config->log_file_fd = STDOUT_FILENO;
+  g_config->log_file = fdopen(STDOUT_FILENO, "a");
 
   return g_config;
 }
