@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 #include "ed.h"
 
+static const unsigned int MTU = 1472;
 
 // 指令码
 static const char CODE_CONNECT_REQURST[8] = {0x31, 0xB3, 0x59, 0xC6, 0x47, 0xD8, 0x5A, 0xC3};
@@ -47,7 +49,12 @@ int read_config() {
 }
 
 unsigned int package_count() {
-  return 0;
+  unsigned single_repeat_bytes_count = g_config->sampleCount * 2 * g_config->ad_channel;
+  if (single_repeat_bytes_count % MTU == 0) {
+    return single_repeat_bytes_count / MTU * g_config->repeatCount;
+  }else{
+    return ceil(single_repeat_bytes_count / (float)MTU)  * g_config->repeatCount;
+  }
 }
 
 int enable_cache() {

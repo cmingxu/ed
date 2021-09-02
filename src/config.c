@@ -40,6 +40,33 @@ config_t *create_default_config() {
   return g_config;
 }
 
+// update log file handle
+config_t *update_config_log_file(FILE *new_log_file) {
+  g_config->log_file = new_log_file;
+  return g_config;
+}
+
+// update config file
+config_t *update_config_file(FILE *new_config_file) {
+  g_config->config_file = new_config_file;
+  return g_config;
+}
+
+// update local addr, local ip and local port update respectively
+config_t *update_local_addr(const char*ip, unsigned int port) {
+  g_config->localIp = ip_to_int(ip);
+  g_config->localPort = port;
+  return g_config;
+}
+
+// update local addr, local ip and local port update respectively
+config_t *update_device_addr(const char*ip, unsigned int port) {
+  g_config->deviceIp = ip_to_int(ip);
+  g_config->devicePort = port;
+  return g_config;
+}
+
+
 static int32_t
 ip_to_int(const char *ip){
   int32_t v = 0;

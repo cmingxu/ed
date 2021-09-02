@@ -22,8 +22,9 @@ int main(int argc, const char *argv[])
   printf("%d\n", c->localIp);
   printf ("'%s' is 0x%08x.\n", "192.1.1.1", c->localIp);
 
-
   write_config();
+
+  assert(package_count() == 4077);
 
   return 0;
 }

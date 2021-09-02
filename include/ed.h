@@ -30,13 +30,21 @@ struct config{
 
   // log file fd, default stdout
   FILE* log_file;
+  FILE* config_file;
   int socket;
   bool cache_enabled;
+
+  // marks config written to device or not
+  bool dity;
 };
 typedef struct config config_t;
 
 // create default global config
 config_t* create_default_config();
+config_t* update_log_file(FILE *);
+config_t* update_config_file(FILE *);
+config_t* update_local_addr(const char*, unsigned int);
+config_t* update_device_addr(const char*, unsigned int);
 
 // 全局配置
 config_t* g_config;
