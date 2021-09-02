@@ -15,11 +15,11 @@ struct config{
   // 降采样点数
   uint16_t sampleCount2;
   // 本机IP地址
-  int32_t localIp;
+  uint32_t localIp;
   // 本机UDP端口地址
   unsigned int localPort;
   // 设备IP地址
-  int32_t deviceIp;
+  uint32_t deviceIp;
   // 设备端口地址
   unsigned int devicePort;
 
@@ -64,6 +64,7 @@ config_t* g_config;
 // 外触发边沿，无符号，1Byte，默认 0(0x0:下降沿，0x1:上升沿);
 #define OUTER_TRIGGER_DOWN 0
 #define OUTER_TRIGGER_UP 1
+
 
 
 #define CONNECT_SUCCESS 0

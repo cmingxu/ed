@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "ed.h"
+#include "utils.h"
 
 static const unsigned int MTU = 1472;
 
@@ -17,16 +18,7 @@ static const char CODE_TRIGGER[8] = {0x67, 0x69, 0x72, 0x54, 0x2D, 0x74, 0x6E, 0
 static const char CODE_STOP_COLLECT_REQUEST[8] = {0x71, 0x63, 0x41, 0x2B, 0x70, 0x6F, 0x74, 0x53};
 static const char CODE_STOP_COLLECT_RESPONSE[8] = {0x50, 0x6F, 0x74, 0x73, 0x3E, 0x6E, 0x69, 0x46};
 
-static int _pack_config(config_t *c, char *);
-static void _pack_uint32(char *, uint32_t, size_t);
-static void _pack_int32(char *, int32_t, size_t);
-static void _pack_uint16(char *, uint16_t, size_t);
-static void _pack_short(char *, short, size_t);
-
-static int _send(char *, size_t size);
-static int _write(char *, size_t size);
-static int _recv(char *);
-static int _read(char *);
+static int _pack_config(config_t *, char *);
 
 // 核心功能函数
 int connect() {
@@ -34,21 +26,17 @@ int connect() {
 }
 
 int send_config() {
-  return SEND_CONFIG_SUCCESS;
-}
-
-int write_config() {
   char buf[32];
   memset(buf, '\0', 32);
   _pack_config(g_config, buf);
-  return WRITE_CONFIG_SUCCESS;
+
+  return SEND_CONFIG_SUCCESS;
 }
 
-int read_config() {
-  return READ_CONFIG_SUCCESS;
-}
 
 unsigned int package_count() {
+  assert(g_config);
+  
   unsigned single_repeat_bytes_count = g_config->sampleCount * 2 * g_config->ad_channel;
   if (single_repeat_bytes_count % MTU == 0) {
     return single_repeat_bytes_count / MTU * g_config->repeatCount;
@@ -59,18 +47,19 @@ unsigned int package_count() {
 
 int enable_cache() {
   assert(g_config);
+
   g_config->cache_enabled = true;
   return 1;
 }
 
 int disable_cache() {
   assert(g_config);
+  
   g_config->cache_enabled = false;
   return 1;
 }
 
-// 内部函数 
-static int _pack_config(config_t *c, char *packed) {
+int _pack_config(config_t *c, char *packed) {
   char *pos = packed;
   for (int i = 0; i < 8; i++) {
     *(pos++) = CODE_CONNECT_REQURST[i];
@@ -103,26 +92,3 @@ static int _pack_config(config_t *c, char *packed) {
   return 0;
 }
 
-static void _pack_uint32(char *pos, uint32_t value, size_t size){
-  for (int i = 0; i < size; i++) {
-    *(pos+i) = value >> ((size - 1 - i) * 8) & 0xFF;
-  }
-}
-
-static void _pack_int32(char *pos, int32_t value, size_t size){
-  for (int i = 0; i < size; i++) {
-    *(pos+i) = value >> ((size - 1 - i) * 8) & 0xFF;
-  }
-}
-
-static void _pack_uint16(char *pos, uint16_t value, size_t size){
-  for (int i = 0; i < size; i++) {
-    *(pos+i) = value >> ((size - 1 - i) * 8) & 0xFF;
-  }
-}
-
-static void _pack_short(char *pos, short value, size_t size){
-  for (int i = 0; i < size; i++) {
-    *(pos+i) = value >> ((size - 1 - i) * 8) & 0xFF;
-  }
-}
