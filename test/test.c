@@ -16,11 +16,10 @@ int main(int argc, const char *argv[])
   assert(c->cache_enabled == true);
 
   printf("%d\n", c->localPort);
-  printf("%d\n", c->localIp);
+  printf("%s\n", c->localIp);
 
   printf("%d\n", c->localPort);
-  printf("%d\n", c->localIp);
-  printf ("'%s' is 0x%08x.\n", "192.1.1.1", c->localIp);
+  printf("%s\n", c->localIp);
 
   FILE *fp = fopen("/tmp/ed_config", "w+");
   if (fp == NULL) {
@@ -33,6 +32,7 @@ int main(int argc, const char *argv[])
   assert(package_count() == 4077);
 
   fclose(fp);
+  connect_device();
 
   return 0;
 }

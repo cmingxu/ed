@@ -7,8 +7,8 @@
 #include "ed.h"
 #include "util.h"
 
-static const char *defaultLocalIP = "192.1.1.1";
-static const unsigned int defaultLocalPort = 5000;
+static const char *defaultLocalIP = "192.168.1.5";
+static const unsigned int defaultLocalPort = 7;
 
 static const char *defaultDeviceIP = "192.168.1.41";
 static const unsigned int defaultDevicePort = 5000;
@@ -59,10 +59,10 @@ config_t *create_default_config() {
   g_config->repeatCount = 3;
   g_config->sampleCount2 = 2;
 
-  g_config->localIp = ip_to_int(defaultLocalIP);
+  g_config->localIp = strdup(defaultLocalIP);
   g_config->localPort = defaultLocalPort;
 
-  g_config->deviceIp = ip_to_int(defaultDeviceIP);
+  g_config->deviceIp = strdup(defaultDeviceIP);
   g_config->devicePort = defaultDevicePort;
 
   g_config->ad_channel = ADCHANNEL_SINGLE;
@@ -91,14 +91,14 @@ config_t *update_config_file(FILE *new_config_file) {
 
 // update local addr, local ip and local port update respectively
 config_t *update_local_addr(const char*ip, unsigned int port) {
-  g_config->localIp = ip_to_int(ip);
+  g_config->localIp = strdup(ip);
   g_config->localPort = port;
   return g_config;
 }
 
 // update local addr, local ip and local port update respectively
 config_t *update_device_addr(const char*ip, unsigned int port) {
-  g_config->deviceIp = ip_to_int(ip);
+  g_config->deviceIp = strdup(ip);
   g_config->devicePort = port;
   return g_config;
 }
@@ -116,12 +116,9 @@ int write_config() {
   _write_config_prop_uint32(KEY_DELAY_COUNT, g_config->delayCount);
   _write_config_prop_uint16(KEY_REPEAT_COUNT, g_config->repeatCount);
   _write_config_prop_uint32(KEY_SAMPLE_COUNT2, g_config->sampleCount);
-  int_to_ip(local_ip_buf, g_config->localIp);
-  printf("%d  ==== %s\n", g_config->localIp, local_ip_buf);
-  _write_config_prop_str(KEY_LOCAL_IP, local_ip_buf);
+  _write_config_prop_str(KEY_LOCAL_IP, g_config->localIp);
   _write_config_prop_unsigned(KEY_LOCAL_PORT, g_config->localPort);
-  int_to_ip(device_ip_buf, g_config->deviceIp);
-  _write_config_prop_str(KEY_DEVICE_IP, device_ip_buf);
+  _write_config_prop_str(KEY_DEVICE_IP, g_config->deviceIp);
   _write_config_prop_unsigned(KEY_DEVICE_PORT, g_config->devicePort);
   _write_config_prop_short(KEY_AD_CHANNEL, g_config->ad_channel);
   _write_config_prop_short(KEY_AD_BIT, g_config->ad_bit);
@@ -159,8 +156,7 @@ int read_config() {
     }
 
     if(has_prefix(buf, KEY_LOCAL_IP)) {
-      _read_config_prop_str(buf, local_ip_buf);
-      g_config->localIp = ip_to_int(local_ip_buf);
+      _read_config_prop_str(buf, g_config->localIp);
     }
 
     if(has_prefix(buf, KEY_LOCAL_PORT)) {
@@ -168,8 +164,7 @@ int read_config() {
     }
 
     if(has_prefix(buf, KEY_DEVICE_IP)) {
-      _read_config_prop_str(buf, device_ip_buf);
-      g_config->deviceIp = ip_to_int(device_ip_buf);
+      _read_config_prop_str(buf, g_config->deviceIp);
     }
 
     if(has_prefix(buf, KEY_DEVICE_PORT)) {
@@ -301,4 +296,12 @@ static bool has_prefix(const char*str, const char *pre) {
   size_t lenpre = strlen(pre),
          lenstr = strlen(str);
   return lenstr < lenpre ? false : memcmp(pre, str, lenpre) == 0;
+}
+
+uint32_t config_local_ip_int32(){
+  return ip_to_int(g_config->localIp);
+}
+
+uint32_t config_device_ip_int32(){
+  return ip_to_int(g_config->deviceIp);
 }

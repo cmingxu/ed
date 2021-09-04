@@ -15,11 +15,11 @@ struct config{
   // 降采样点数
   uint16_t sampleCount2;
   // 本机IP地址
-  uint32_t localIp;
+  char * localIp;
   // 本机UDP端口地址
   unsigned int localPort;
   // 设备IP地址
-  uint32_t deviceIp;
+  char * deviceIp;
   // 设备端口地址
   unsigned int devicePort;
 
@@ -45,6 +45,8 @@ config_t* update_log_file(FILE *);
 config_t* update_config_file(FILE *);
 config_t* update_local_addr(const char*, unsigned int);
 config_t* update_device_addr(const char*, unsigned int);
+uint32_t config_local_ip_int32();
+uint32_t config_device_ip_int32();
 
 // 全局配置
 config_t* g_config;
@@ -71,7 +73,7 @@ config_t* g_config;
 #define CONNECT_FAIL 10001
 #define CONNECT_TIMEOUT 10002
 #define CONNECT_VERIFY_ERR 10003
-int connect();
+int connect_device();
 
 // 发送配置信息
 #define SEND_CONFIG_SUCCESS 0
