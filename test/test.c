@@ -6,37 +6,54 @@
 
 int main(int argc, const char *argv[])
 {
-  config_t *c = load_default_config();
-  assert(c->sampleCount == 1000000);
+  config_t *c = (config_t *)malloc(sizeof(config_t));
+  load_default_config(c);
+  assert(c->sample_count == 1000000);
 
-  disable_cache();
+  disable_cache(c);
   assert(c->storage_enabled == false);
 
-  enable_cache();
+  enable_cache(c);
   assert(c->storage_enabled == true);
 
-  printf("%d\n", c->localPort);
-  printf("%s\n", c->localIp);
+  printf("%d\n", c->local_port);
+  printf("%s\n", c->local_ip);
 
-  printf("%d\n", c->localPort);
-  printf("%s\n", c->localIp);
+  printf("%d\n", c->device_port);
+  printf("%s\n", c->device_ip);
 
   FILE *fp = fopen("/tmp/ed_config", "w+");
   if (fp == NULL) {
     perror("fail open config");
   }
-  set_config_file(fp);
-  write_config();
-  read_config();
-
-  assert(package_count() == 4077);
+  write_config(c, fp);
 
   fclose(fp);
-  connect_device();
+  FILE *fp1 = fopen("/tmp/ed_config", "rw");
+  if (fp1 == NULL) {
+    perror("fail open config");
+  }
+  config_t *c1 = (config_t *)malloc(sizeof(config_t));
+  load_config(c1, fp1);
 
-  send_config();
-  start_collect();
-  start_recv();
+  printf("%d\n", package_count(c1));
+  assert(package_count(c1) == 4077);
+
+  fclose(fp1);
+
+  addr_t *a1 = (addr_t *)malloc(sizeof(addr_t));
+  memset(a1, '\0', sizeof(addr_t));
+  printf("%lu\n", sizeof(addr_t));
+  int r = connect_device(c1, a1);
+  printf("%d\n", r);
+
+  send_config_to_device(c1, a1);
+  start_collect(c1, a1);
+  FILE *result = fopen("/tmp/ed_storage", "w+");
+  if (fp == NULL) {
+    perror("fail open config");
+  }
+  start_recv(c1, a1, result);
 
   return 0;
 }

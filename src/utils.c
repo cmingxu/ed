@@ -44,3 +44,47 @@ void _debug_hex(void *buf, size_t size){
     printf("%02X ",  *(tmp+i) & 0xff);
   }
 }
+
+
+
+char* int_to_ip(char *buffer, uint16_t ip){
+  sprintf(buffer, "%d.%d.%d.%d",
+      (ip >> 24) & 0xFF,
+      (ip >> 16) & 0xFF,
+      (ip >>  8) & 0xFF,
+      (ip      ) & 0xFF);
+
+  return buffer;
+}
+
+uint32_t ip_to_int(const char *ip){
+  int32_t v = 0;
+  int i;
+  const char * start;
+
+  start = ip;
+  for (i = 0; i < 4; i++) {
+    char c;
+    int n = 0;
+    while (1) {
+      c = * start;
+      start++;
+      if (c >= '0' && c <= '9') {
+        n *= 10;
+        n += c - '0';
+      }
+      else if ((i < 3 && c == '.') || i == 3) {
+        break;
+      }
+      else {
+        return 0;
+      }
+    }
+    if (n >= 256) {
+      return 0;
+    }
+    v *= 256;
+    v += n;
+  }
+  return v;
+}

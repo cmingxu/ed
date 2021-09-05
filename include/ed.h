@@ -9,30 +9,30 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-struct ed_addr{
+struct addr{
   int socket;
   struct sockaddr_in deviceaddr;
   struct sockaddr_in localaddr;
 };
-typedef struct ed_addr ed_addr_t;
+typedef struct addr addr_t;
 
 struct config{
   // 采样点数
-  uint32_t sampleCount;
+  uint32_t sample_count;
   // 延时点数
-  uint32_t delayCount;
+  uint32_t delay_count;
   // 重复次数
-  uint16_t repeatCount;
+  uint16_t repeat_count;
   // 降采样点数
-  uint16_t sampleCount2;
+  uint16_t sample_count2;
   // 本机IP地址
-  char * localIp;
+  char local_ip[32];
   // 本机UDP端口地址
-  unsigned int localPort;
+  unsigned int local_port;
   // 设备IP地址
-  char * deviceIp;
+  char device_ip[32];
   // 设备端口地址
-  unsigned int devicePort;
+  unsigned int device_port;
 
   short ad_channel;
   short ad_bit;
@@ -41,23 +41,16 @@ struct config{
 
   // log file fd, default stdout
   FILE* log_file;
-  FILE* config_file;
-  ed_addr_t *addr;
   bool storage_enabled;
 };
 typedef struct config config_t;
 
 // create default global config
-config_t* load_default_config();
-config_t* set_log_file(FILE *);
-config_t* set_config_file(FILE *);
-config_t* set_local_addr(const char*, unsigned int);
-config_t* set_device_addr(const char*, unsigned int);
-uint32_t config_local_ip_int32();
-uint32_t config_device_ip_int32();
+int load_default_config(config_t *);
+int set_log_file(config_t *, FILE *);
+int set_local_addr(config_t *, const char*, unsigned int);
+int set_device_addr(config_t *, const char*, unsigned int);
 
-// 全局配置
-config_t* g_config;
 
 // AD 通道数 默认 1(1:单通道;2:双通道);
 #define ADCHANNEL_SINGLE 1
@@ -79,57 +72,57 @@ config_t* g_config;
 #define CONNECT_FAIL 10001
 #define CONNECT_TIMEOUT 10002
 #define CONNECT_VERIFY_ERR 10003
-int connect_device();
+int connect_device(config_t *, addr_t *);
 
 // 发送配置信息
 #define SEND_CONFIG_SUCCESS 0
 #define SEND_CONFIG_FAIL 10001
 #define SEND_CONFIG_TIMEOUT 10002
 #define SEND_CONFIG_VERIFY_ERR 10003
-int send_config();
+int send_config_to_device(config_t *, addr_t *);
 
 // 存储配置信息
 #define WRITE_CONFIG_FAIL -1
 #define WRITE_CONFIG_SUCCESS 0
-int write_config();
+int write_config(config_t*, FILE *);
 
 // 读取配置信息
 #define READ_CONFIG_SUCCESS 0
 #define READ_CONFIG_FAIL -1
-int read_config();
+int load_config(config_t*, FILE *);
 
 // 计算数据包数量
-unsigned int package_count();
+unsigned int package_count(config_t *);
 
 // 使能数据存储
-int enable_cache();
+int enable_cache(config_t *);
 
 // 禁用数据存储
-int disable_cache();
+int disable_cache(config_t *);
 
 // 内部触发
 #define START_COLLECT_SUCCESS 0
 #define START_COLLECT_FAIL 10001
 #define START_COLLECT_TIMEOUT 10002
 #define START_COLLECT_VERIFY_ERR 10003
-int start_collect();
+int start_collect(config_t *, addr_t *);
 
 // 停止采集
-int stop_collect();
+int stop_collect(config_t *, addr_t *);
 
 // 开始数据接收
-void start_recv();
+void start_recv(config_t *, addr_t *, FILE *);
 
 // 停止数据接收
-void stop_recv();
+void stop_recv(addr_t *);
 
 // 重新开始数据接收
-void restart_recv();
+void restart_recv(config_t *, addr_t *, FILE *);
 
 
 #define LOG(fmt, ...) do {	\
-		fprintf(g_config->log_file, "[LOG] %s:%d: " fmt "\n", __FUNCTION__,__LINE__, __VA_ARGS__); \
-		fflush(g_config->log_file); \
+		fprintf(stdout, "[LOG] %s:%d: " fmt "\n", __FUNCTION__,__LINE__, __VA_ARGS__); \
+		fflush(stdout); \
 } while(0)
  
 #define ED_LOG( fmt, ... ) LOG(fmt,__VA_ARGS__ )
