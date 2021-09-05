@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "ed.h"
-#include "util.h"
+#include "utils.h"
 
 static const char *defaultLocalIP = "192.168.1.5";
 static const unsigned int defaultLocalPort = 7;
@@ -68,11 +68,13 @@ config_t *create_default_config() {
   g_config->ad_channel = ADCHANNEL_SINGLE;
   g_config->ad_bit = ADBIT_12;
   g_config->trigger = TRIGGER_UP;
-  g_config->outer_trigger = OUTER_TRIGGER_UP;
+  g_config->outer_trigger = OUTER_TRIGGER_DOWN;
 
   // default set to stdout
   g_config->log_file = fdopen(STDOUT_FILENO, "a");
   g_config->config_file = NULL;
+
+  g_config->addr = (ed_addr_t *)malloc(sizeof(ed_addr_t));
 
   return g_config;
 }

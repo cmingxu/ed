@@ -34,5 +34,7 @@ int main(int argc, const char *argv[])
   fclose(fp);
   connect_device();
 
+  send_config();
+
   return 0;
 }

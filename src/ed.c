@@ -3,10 +3,6 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include<netinet/in.h>
 #include <errno.h>
 
 #include "ed.h"
@@ -19,37 +15,36 @@ static const char CODE_CONNECT_REQURST[8] = {0x31, 0xB3, 0x59, 0xC6, 0x47, 0xD8,
 static const char CODE_CONNECT_RESPONSE[8] = {0x21, 0x74, 0x63, 0x65, 0x6E, 0x4E, 0x6F, 0x43};
 static const char CODE_SEND_CONFIG_REQUEST[8] = {0x44, 0xE1, 0xF4, 0x61, 0x43, 0xEF, 0xED, 0x65};
 static const char CODE_SEND_CONFIG_RESPONSE[8] = {0x23, 0x76, 0x63, 0x52, 0x20, 0x67, 0x66, 0x43};
-static const char CODE_TRIGGER[8] = {0x67, 0x69, 0x72, 0x54, 0x2D, 0x74, 0x6E, 0x49};
+static const char CODE_START_COLLECT[8] = {0x67, 0x69, 0x72, 0x54, 0x2D, 0x74, 0x6E, 0x49};
 static const char CODE_STOP_COLLECT_REQUEST[8] = {0x71, 0x63, 0x41, 0x2B, 0x70, 0x6F, 0x74, 0x53};
 static const char CODE_STOP_COLLECT_RESPONSE[8] = {0x50, 0x6F, 0x74, 0x73, 0x3E, 0x6E, 0x69, 0x46};
 
-static void reversed_memcpy(char *target, const char *src, size_t size);
 static int _pack_config(config_t *, char *);
+static size_t _write(char *buf, size_t);
+static size_t _read(char *buf, size_t);
 
 // 核心功能函数
 int connect_device() {
-  struct sockaddr_in servaddr, srcaddr;
-
   // clear servaddr
-  bzero(&servaddr, sizeof(servaddr));
-  servaddr.sin_addr.s_addr = inet_addr(g_config->deviceIp);
-  servaddr.sin_port = htons(g_config->devicePort);
-  servaddr.sin_family = AF_INET;
+  bzero(&g_config->addr->deviceaddr, sizeof(g_config->addr->deviceaddr));
+  g_config->addr->deviceaddr.sin_addr.s_addr = inet_addr(g_config->deviceIp);
+  g_config->addr->deviceaddr.sin_port = htons(g_config->devicePort);
+  g_config->addr->deviceaddr.sin_family = AF_INET;
 
-  bzero(&srcaddr, sizeof(srcaddr));
-  srcaddr.sin_family = AF_INET;
-  srcaddr.sin_addr.s_addr = inet_addr(g_config->localIp);
-  srcaddr.sin_port = htons(g_config->localPort);
+  bzero(&g_config->addr->localaddr, sizeof(g_config->addr->localaddr));
+  g_config->addr->localaddr.sin_family = AF_INET;
+  g_config->addr->localaddr.sin_addr.s_addr = inet_addr(g_config->localIp);
+  g_config->addr->localaddr.sin_port = htons(g_config->localPort);
 
   // create datagram socket
-  g_config->socket = socket(AF_INET, SOCK_DGRAM, 0);
-  if (bind(g_config->socket, (struct sockaddr *) &srcaddr, sizeof(srcaddr)) < 0) {
+  g_config->addr->socket = socket(AF_INET, SOCK_DGRAM, 0);
+  if (bind(g_config->addr->socket, (struct sockaddr *) &g_config->addr->localaddr, sizeof(g_config->addr->localaddr)) < 0) {
     ED_LOG("bind failed: %s", strerror(errno));
     return CONNECT_FAIL;
   }
 
-  // connect to server
-  if(connect(g_config->socket, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
+  // connect to device UDP endpoint
+  if(connect(g_config->addr->socket, (struct sockaddr *)&g_config->addr->deviceaddr, sizeof(g_config->addr->deviceaddr)) < 0)
   {
     ED_LOG("connect failed: %s", strerror(errno));
     return CONNECT_FAIL;
@@ -58,16 +53,16 @@ int connect_device() {
   // sending connect request
   char message[32];
   memset(message, '\0', 32);
-  reversed_memcpy(message, CODE_CONNECT_REQURST, 8);
-  sendto(g_config->socket, message, 32, 0, (struct sockaddr*)NULL, sizeof(servaddr));
+  _pack_char_arr(message, CODE_CONNECT_REQURST, 8);
+  _write(message, 32);
 
   // recv connect response
   char connect_resp[32];
-  recvfrom(g_config->socket, connect_resp, sizeof(connect_resp), MSG_WAITALL, (struct sockaddr*)NULL, NULL);
+  _read(connect_resp, 32);
 
   char expected[8];
-  reversed_memcpy(expected, CODE_CONNECT_RESPONSE, 8);
-  if( memcmp(connect_resp, expected, 8) != 0 ) {
+  _pack_char_arr(expected, CODE_CONNECT_RESPONSE, 8);
+  if(memcmp(connect_resp, expected, 8) != 0 ) {
     return CONNECT_VERIFY_ERR;
   }
   return CONNECT_SUCCESS;
@@ -77,8 +72,35 @@ int send_config() {
   char buf[32];
   memset(buf, '\0', 32);
   _pack_config(g_config, buf);
+  _debug_hex(buf, 32);
+
+  _write(buf, 32);
+
+  // recv connect response
+  char send_config_resp[32];
+  _read(send_config_resp, 32);
+
+  char expected[8];
+  _pack_char_arr(expected, CODE_SEND_CONFIG_RESPONSE, 8);
+  _debug_hex(send_config_resp, 32);
+  if(memcmp(send_config_resp, expected, 8) != 0 ) {
+    return SEND_CONFIG_VERIFY_ERR;
+  }
 
   return SEND_CONFIG_SUCCESS;
+}
+
+
+int start_collect(){
+  char buf[32];
+  memset(buf, '\0', 32);
+  _pack_char_arr(buf, CODE_START_COLLECT, 8);
+  _debug_hex(buf, 32);
+
+  sendto(g_config->addr->socket, buf, 32, 0, (struct sockaddr*)NULL, sizeof(g_config->addr->deviceaddr));
+
+
+  return START_COLLECT_SUCCESS;
 }
 
 
@@ -107,41 +129,40 @@ int disable_cache() {
   return 1;
 }
 
-int _pack_config(config_t *c, char *packed) {
+static int _pack_config(config_t *c, char *packed) {
   char *pos = packed;
-  for (int i = 0; i < 8; i++) {
-    *(pos++) = CODE_CONNECT_REQURST[i];
-  }
+  _pack_char_arr(pos, CODE_SEND_CONFIG_REQUEST, 8);
+  pos+=8;
 
-  _pack_uint32(pos, c->sampleCount, 4);
+  _pack_uint32(pos, c->sampleCount);
   pos+=4;
 
-  _pack_uint32(pos, c->delayCount, 4);
+  _pack_uint32(pos, c->delayCount);
   pos+=4;
 
-  _pack_uint16(pos, c->repeatCount, 2);
+  _pack_uint16(pos, c->repeatCount);
   pos+=2;
 
-  _pack_uint16(pos, c->sampleCount2, 2);
+  _pack_uint16(pos, c->sampleCount2);
   pos+=2;
 
-  _pack_uint32(pos, config_local_ip_int32(c->localIp), 4);
+  _pack_uint32(pos, config_device_ip_int32());
   pos+=4;
 
-  _pack_short(pos, c->trigger, 1);
+  _pack_short(pos, c->trigger);
   pos+=1;
 
-  _pack_short(pos, c->outer_trigger, 1);
+  _pack_short(pos, c->outer_trigger);
   pos+=1;
 
-  for (int i = 0; i < (pos - packed); i++) {
-    ED_LOG("%02x", packed[i] & 0xff);
-  }
   return 0;
 }
 
-static void reversed_memcpy(char *target, const char *src, size_t size){
-  for (int i = 0; i < size; i++) {
-    *(target+i) = src[size-i-1];
-  }
+
+static size_t _write(char *buf, size_t size){
+  return sendto(g_config->addr->socket, buf, size, 0, (struct sockaddr*)NULL, sizeof(g_config->addr->deviceaddr));
+}
+
+static size_t _read(char *buf, size_t size){
+  return recvfrom(g_config->addr->socket, buf, size, MSG_WAITALL, (struct sockaddr*)NULL, NULL);
 }

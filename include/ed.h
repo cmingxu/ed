@@ -4,6 +4,17 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+struct ed_addr{
+  int socket;
+  struct sockaddr_in deviceaddr;
+  struct sockaddr_in localaddr;
+};
+typedef struct ed_addr ed_addr_t;
 
 struct config{
   // 采样点数
@@ -31,7 +42,7 @@ struct config{
   // log file fd, default stdout
   FILE* log_file;
   FILE* config_file;
-  int socket;
+  ed_addr_t *addr;
   bool cache_enabled;
 
   // marks config written to device or not
@@ -102,6 +113,12 @@ int enable_cache();
 int disable_cache();
 
 // 内部触发
+#define START_COLLECT_SUCCESS 0
+#define START_COLLECT_FAIL 10001
+#define START_COLLECT_TIMEOUT 10002
+#define START_COLLECT_VERIFY_ERR 10003
+int start_collect();
+
 // 停止采集
 int stop_collect();
 
