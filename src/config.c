@@ -44,7 +44,7 @@ static bool _read_config_prop_str(const char *, char *);
 static bool has_prefix(const char*, const char *) ;
 
 
-config_t *create_default_config() {
+config_t *load_default_config() {
   if( g_config != NULL) {
     return g_config;
   }
@@ -67,7 +67,7 @@ config_t *create_default_config() {
 
   g_config->ad_channel = ADCHANNEL_SINGLE;
   g_config->ad_bit = ADBIT_12;
-  g_config->trigger = TRIGGER_UP;
+  g_config->trigger = TRIGGER_INNER;
   g_config->outer_trigger = OUTER_TRIGGER_DOWN;
 
   // default set to stdout
@@ -80,26 +80,26 @@ config_t *create_default_config() {
 }
 
 // update log file handle
-config_t *update_config_log_file(FILE *new_log_file) {
+config_t *set_config_log_file(FILE *new_log_file) {
   g_config->log_file = new_log_file;
   return g_config;
 }
 
 // update config file
-config_t *update_config_file(FILE *new_config_file) {
+config_t *set_config_file(FILE *new_config_file) {
   g_config->config_file = new_config_file;
   return g_config;
 }
 
 // update local addr, local ip and local port update respectively
-config_t *update_local_addr(const char*ip, unsigned int port) {
+config_t *set_local_addr(const char*ip, unsigned int port) {
   g_config->localIp = strdup(ip);
   g_config->localPort = port;
   return g_config;
 }
 
 // update local addr, local ip and local port update respectively
-config_t *update_device_addr(const char*ip, unsigned int port) {
+config_t *set_device_addr(const char*ip, unsigned int port) {
   g_config->deviceIp = strdup(ip);
   g_config->devicePort = port;
   return g_config;

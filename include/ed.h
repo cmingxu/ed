@@ -43,19 +43,16 @@ struct config{
   FILE* log_file;
   FILE* config_file;
   ed_addr_t *addr;
-  bool cache_enabled;
-
-  // marks config written to device or not
-  bool dity;
+  bool storage_enabled;
 };
 typedef struct config config_t;
 
 // create default global config
-config_t* create_default_config();
-config_t* update_log_file(FILE *);
-config_t* update_config_file(FILE *);
-config_t* update_local_addr(const char*, unsigned int);
-config_t* update_device_addr(const char*, unsigned int);
+config_t* load_default_config();
+config_t* set_log_file(FILE *);
+config_t* set_config_file(FILE *);
+config_t* set_local_addr(const char*, unsigned int);
+config_t* set_device_addr(const char*, unsigned int);
 uint32_t config_local_ip_int32();
 uint32_t config_device_ip_int32();
 
@@ -71,14 +68,12 @@ config_t* g_config;
 #define ADBIT_14 14
 
 // 触发方式，无符号，1Byte，默认 0(0x0:外触发，0x1:内触发);
-#define TRIGGER_UP 0
-#define TRIGGER_DOWN 1
+#define TRIGGER_OUTER 0
+#define TRIGGER_INNER 1
 
 // 外触发边沿，无符号，1Byte，默认 0(0x0:下降沿，0x1:上升沿);
 #define OUTER_TRIGGER_DOWN 0
 #define OUTER_TRIGGER_UP 1
-
-
 
 #define CONNECT_SUCCESS 0
 #define CONNECT_FAIL 10001
