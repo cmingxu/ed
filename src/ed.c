@@ -34,13 +34,15 @@ int connect_device(config_t *c, addr_t *addr) {
   assert(c);
   assert(addr);
   // clear servaddr
+  bzero(&(addr->deviceaddr), sizeof(addr->deviceaddr));
+  addr->deviceaddr.sin_family = AF_INET;
   /*addr->deviceaddr.sin_addr.s_addr = inet_addr(c->device_ip);*/
   addr->deviceaddr.sin_addr.s_addr = inet_addr("192.168.1.41");
   /*addr->deviceaddr.sin_port = htons(c->device_port);*/
   addr->deviceaddr.sin_port = htons(5000);
-  addr->deviceaddr.sin_family = AF_INET;
 
 
+  bzero(&(addr->localaddr), sizeof(addr->localaddr));
   addr->localaddr.sin_family = AF_INET;
   /*addr->localaddr.sin_addr.s_addr = inet_addr(c->local_ip);*/
   addr->localaddr.sin_addr.s_addr = inet_addr("192.158.1.5");
@@ -49,7 +51,7 @@ int connect_device(config_t *c, addr_t *addr) {
 
   // create datagram socket
   addr->socket = socket(AF_INET, SOCK_DGRAM, 0);
-  if (bind(addr->socket, (struct sockaddr *) &addr->localaddr, sizeof(addr->localaddr)) < 0) {
+  if (bind(addr->socket, (struct sockaddr *) &(addr->localaddr), sizeof(addr->localaddr)) < 0) {
     ED_LOG("bind failed: %s", strerror(errno));
     return CONNECT_FAIL;
   }
@@ -144,25 +146,22 @@ void start_recv(config_t *c, addr_t *addr, FILE *file){
       current_it = 0;
 
   /*_settimeout(500);*/
-  printf("\ntotal expected %d\n", total_bytes);
-  printf("\niteration expected%d\n", iteration);
   while(current_it < iteration) {
     memset(buf, '\0', MTU);
     int nread = _read(addr, buf, MTU);
-    received += nread;
-  /*printf("nread %d\n", nread);*/
-  /*printf("received %d\n", received);*/
-  /*printf("total_iteration %d\n", current_it);*/
-    /*_debug_hex(buf, MTU);*/
-    current_it += 1;
-    if(nread < MTU) {
-      /*break;*/
-      printf("11111111111\n");
-  printf("nread %d\n", nread);
-  printf("received %d\n", received);
-  printf("total_iteration %d\n", current_it);
+    if(c->storage_enabled) {
+      fwrite(buf, 1024, nread, file);
     }
+
+    received += nread;
+    if(nread < MTU) {
+      break;
+    }
+
+    current_it += 1;
   }
+
+  fflush(file);
 
   printf("received %d\n", received);
   printf("total_iteration %d\n", current_it);
