@@ -73,6 +73,7 @@ int set_device_addr(config_t *, const char*, unsigned int);
 #define CONNECT_TIMEOUT 10002
 #define CONNECT_VERIFY_ERR 10003
 int connect_device(config_t *, addr_t *);
+int disconnect_device(config_t *, addr_t *);
 
 // 发送配置信息
 #define SEND_CONFIG_SUCCESS 0
@@ -108,6 +109,8 @@ int disable_cache(config_t *);
 int start_collect(config_t *, addr_t *);
 
 // 停止采集
+#define STOP_COLLECT_SUCCESS 0
+#define STOP_COLLECT_FAIL 10001
 int stop_collect(config_t *, addr_t *);
 
 // 开始数据接收

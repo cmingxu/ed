@@ -43,6 +43,8 @@ void _debug_hex(void *buf, size_t size){
     }
     printf("%02X ",  *(tmp+i) & 0xff);
   }
+
+  printf("\n");
 }
 
 
