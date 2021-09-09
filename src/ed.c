@@ -180,13 +180,12 @@ void start_recv(config_t *c, addr_t *addr, FILE *file){
         }
       }
 
-      printf("%d\n", nread);
       received_byte_count += nread;
       packet_index += 1;
     }
   }
 
-  printf("received %d\n", received_byte_count);
+  ED_LOG("total received bytes count %d\n", received_byte_count);
   if(c->storage_enabled) {
     fwrite(buf, 4096, received_byte_count, file);
   }
@@ -198,6 +197,7 @@ cleanup:
 }
 
 // 停止采集
+// NOTES: stop_collect response take more then 1s to return
 int stop_collect(config_t *c, addr_t *addr){
   char buf[32];
   memset(buf, '\0', 32);
@@ -211,7 +211,7 @@ int stop_collect(config_t *c, addr_t *addr){
     return STOP_COLLECT_FAIL;
   }
 
-  _settimeout(addr, 100);
+  _settimeout(addr, 0);
   // recv connect response
   char stop_collect_resp[32];
   if(_read(addr, stop_collect_resp, 32) != 32) {
@@ -225,8 +225,6 @@ int stop_collect(config_t *c, addr_t *addr){
   if(memcmp(stop_collect_resp, expected, 8) != 0 ) {
     return SEND_CONFIG_VERIFY_ERR;
   }
-
-
 
   return STOP_COLLECT_SUCCESS;
 }

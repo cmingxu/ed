@@ -44,8 +44,7 @@ static bool has_prefix(const char*, const char *) ;
 
 int load_default_config(config_t * c) {
   assert(c);
-  c->sample_count = 1567 * 1000 * 1000;
-  /*c->sample_count = 1000000;*/
+  c->sample_count = 1000000;
   c->delay_count = 320000;
   c->repeat_count = 3;
   c->sample_count2 = 2;
@@ -61,15 +60,6 @@ int load_default_config(config_t * c) {
   c->trigger = TRIGGER_INNER;
   c->outer_trigger = OUTER_TRIGGER_DOWN;
 
-  // default set to stdout
-  c->log_file = fdopen(STDOUT_FILENO, "a");
-
-  return 0;
-}
-
-// update log file handle
-int set_config_log_file(config_t *c, FILE *new_log_file) {
-  c->log_file = new_log_file;
   return 0;
 }
 

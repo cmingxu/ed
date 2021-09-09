@@ -39,15 +39,12 @@ struct config{
   short trigger;
   short outer_trigger;
 
-  // log file fd, default stdout
-  FILE* log_file;
   bool storage_enabled;
 };
 typedef struct config config_t;
 
 // create default global config
 int load_default_config(config_t *);
-int set_log_file(config_t *, FILE *);
 int set_local_addr(config_t *, const char*, unsigned int);
 int set_device_addr(config_t *, const char*, unsigned int);
 

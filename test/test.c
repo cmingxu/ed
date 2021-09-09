@@ -51,8 +51,10 @@ int main(int argc, const char *argv[])
   if (r != CONNECT_SUCCESS) {
     exit(1);
   }
+  stop_collect(c1, a1);
 
   send_config_to_device(c1, a1);
+  enable_cache(c1);
   start_collect(c1, a1);
   FILE *result = fopen("/tmp/ed_storage", "w+");
   if (fp == NULL) {
@@ -60,7 +62,7 @@ int main(int argc, const char *argv[])
   }
   start_recv(c1, a1, result);
 
-  /*stop_collect(c1, a1);*/
+  stop_collect(c1, a1);
   disconnect_device(c1, a1);
 
   return 0;
