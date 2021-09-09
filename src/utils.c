@@ -36,6 +36,7 @@ void _pack_char_arr(char *target, const char *src, size_t size){
 }
 
 void _debug_hex(void *buf, size_t size){
+#ifdef ED_DEBUG
   char *tmp = (char *)buf;
   for (int i = 0; i < size; i++) {
     if ((i % 8 == 0)) {
@@ -45,6 +46,7 @@ void _debug_hex(void *buf, size_t size){
   }
 
   printf("\n");
+#endif
 }
 
 

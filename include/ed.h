@@ -65,11 +65,14 @@ int set_device_addr(config_t *, const char*, unsigned int);
 #define OUTER_TRIGGER_DOWN 0
 #define OUTER_TRIGGER_UP 1
 
+// 建立连接
 #define CONNECT_SUCCESS 0
 #define CONNECT_FAIL 10001
 #define CONNECT_TIMEOUT 10002
 #define CONNECT_VERIFY_ERR 10003
 int connect_device(config_t *, addr_t *);
+
+// 断开连接
 int disconnect_device(config_t *, addr_t *);
 
 // 发送配置信息
@@ -113,17 +116,14 @@ int stop_collect(config_t *, addr_t *);
 // 开始数据接收
 void start_recv(config_t *, addr_t *, FILE *);
 
-// 停止数据接收
-void stop_recv(addr_t *);
-
-// 重新开始数据接收
-void restart_recv(config_t *, addr_t *, FILE *);
-
-
 #define LOG(fmt, ...) do {	\
 		fprintf(stdout, "[LOG] %s:%d: " fmt "\n", __FUNCTION__,__LINE__, __VA_ARGS__); \
 		fflush(stdout); \
 } while(0)
  
+#ifdef ED_DEBUG
 #define ED_LOG( fmt, ... ) LOG(fmt,__VA_ARGS__ )
+#else
+#define ED_LOG( fmt, ... ) {}
+#endif
 #endif
