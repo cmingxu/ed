@@ -1,6 +1,10 @@
 #ifndef ED_H
 #define ED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -116,14 +120,18 @@ int stop_collect(config_t *, addr_t *);
 // 开始数据接收
 void start_recv(config_t *, addr_t *, FILE *);
 
-#define LOG(fmt, ...) do {	\
+#define MYLOG(fmt, ...) do {	\
 		fprintf(stdout, "[LOG] %s:%d: " fmt "\n", __FUNCTION__,__LINE__, __VA_ARGS__); \
 		fflush(stdout); \
 } while(0)
- 
+
 #ifdef ED_DEBUG
-#define ED_LOG( fmt, ... ) LOG(fmt,__VA_ARGS__ )
+#define ED_LOG( fmt, ... ) MYLOG(fmt,__VA_ARGS__ )
 #else
 #define ED_LOG( fmt, ... ) {}
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 #endif
