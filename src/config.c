@@ -17,7 +17,7 @@ static const unsigned int default_device_port = 5000;
 static const char *KEY_SAMPLE_COUNT = "sample_count";
 static const char *KEY_DELAY_COUNT = "delay_count";
 static const char *KEY_REPEAT_COUNT = "repeat_count";
-static const char *KEY_SAMPLE_COUNT2 = "sample_count2";
+static const char *KEY_SAMPLE_COUNT2 = "2sample_count";
 static const char *KEY_LOCAL_IP = "local_ip";
 static const char *KEY_LOCAL_PORT = "local_port";
 static const char *KEY_DEVICE_IP = "device_ip";
@@ -88,7 +88,7 @@ int write_config(config_t *c, FILE *cf) {
   _write_config_prop_uint32(cf, KEY_SAMPLE_COUNT, c->sample_count);
   _write_config_prop_uint32(cf, KEY_DELAY_COUNT, c->delay_count);
   _write_config_prop_uint16(cf, KEY_REPEAT_COUNT, c->repeat_count);
-  _write_config_prop_uint32(cf, KEY_SAMPLE_COUNT2, c->sample_count);
+  _write_config_prop_uint16(cf, KEY_SAMPLE_COUNT2, c->sample_count2);
   _write_config_prop_str(cf, KEY_LOCAL_IP, c->local_ip);
   _write_config_prop_unsigned(cf, KEY_LOCAL_PORT, c->local_port);
   _write_config_prop_str(cf, KEY_DEVICE_IP, c->device_ip);
@@ -125,7 +125,7 @@ int load_config(config_t *c, FILE *config_file) {
     }
 
     if(has_prefix(buf, KEY_SAMPLE_COUNT2)) {
-      _read_config_prop_uint32(buf, &c->sample_count);
+      _read_config_prop_uint16(buf, &c->sample_count2);
     }
 
     if(has_prefix(buf, KEY_LOCAL_IP)) {
