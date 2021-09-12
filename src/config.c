@@ -49,10 +49,10 @@ int load_default_config(config_t * c) {
   c->repeat_count = 3;
   c->sample_count2 = 2;
 
-  strcpy(c->local_ip, default_local_ip);
+  strncpy(c->local_ip, default_local_ip, strlen(default_local_ip));
   c->local_port = default_local_port;
 
-  strcpy(c->device_ip, default_device_ip);
+  strncpy(c->device_ip, default_device_ip, strlen(default_device_ip));
   c->device_port = default_device_port;
 
   c->ad_channel = ADCHANNEL_SINGLE;
