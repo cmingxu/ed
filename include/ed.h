@@ -28,7 +28,7 @@ struct config{
   // 重复次数
   uint16_t repeat_count;
   // 降采样点数
-  uint16_t sample_count2;
+  uint16_t down_sample_count;
   // 本机IP地址
   char local_ip[32];
   // 本机UDP端口地址
@@ -44,6 +44,13 @@ struct config{
   short outer_trigger;
 
   bool storage_enabled;
+
+ #ifdef NEW_LOCAL_IP
+  // 新IP
+  char new_local_ip[32];
+  // 新port
+  unsigned int new_local_port;
+ #endif
 };
 typedef struct config config_t;
 
@@ -51,6 +58,10 @@ typedef struct config config_t;
 int load_default_config(config_t *);
 int set_local_addr(config_t *, const char*, unsigned int);
 int set_device_addr(config_t *, const char*, unsigned int);
+
+#ifdef NEW_LOCAL_IP
+int set_new_local_addr(config_t *, const char*, unsigned int);
+#endif
 
 
 // AD 通道数 默认 1(1:单通道;2:双通道);

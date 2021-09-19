@@ -17,8 +17,9 @@ static const unsigned int default_device_port = 5000;
 static const char *KEY_SAMPLE_COUNT = "sample_count";
 static const char *KEY_DELAY_COUNT = "delay_count";
 static const char *KEY_REPEAT_COUNT = "repeat_count";
-static const char *KEY_SAMPLE_COUNT2 = "2sample_count";
+static const char *KEY_DOWN_SAMPLE_COUNT = "down_sample_count";
 static const char *KEY_LOCAL_IP = "local_ip";
+static const char *NEW_KEY_LOCAL_IP = "new_local_ip";
 static const char *KEY_LOCAL_PORT = "local_port";
 static const char *KEY_DEVICE_IP = "device_ip";
 static const char *KEY_DEVICE_PORT = "device_port";
@@ -47,7 +48,7 @@ int load_default_config(config_t * c) {
   c->sample_count = 1000000;
   c->delay_count = 320000;
   c->repeat_count = 3;
-  c->sample_count2 = 2;
+  c->down_sample_count = 2;
 
   strncpy(c->local_ip, default_local_ip, strlen(default_local_ip));
   c->local_port = default_local_port;
@@ -88,8 +89,11 @@ int write_config(config_t *c, FILE *cf) {
   _write_config_prop_uint32(cf, KEY_SAMPLE_COUNT, c->sample_count);
   _write_config_prop_uint32(cf, KEY_DELAY_COUNT, c->delay_count);
   _write_config_prop_uint16(cf, KEY_REPEAT_COUNT, c->repeat_count);
-  _write_config_prop_uint16(cf, KEY_SAMPLE_COUNT2, c->sample_count2);
+  _write_config_prop_uint16(cf, KEY_DOWN_SAMPLE_COUNT, c->down_sample_count);
   _write_config_prop_str(cf, KEY_LOCAL_IP, c->local_ip);
+#if NEW_LOCAL_IP
+  _write_config_prop_str(cf, NEW_KEY_LOCAL_IP, c->new_local_ip);
+#endif
   _write_config_prop_unsigned(cf, KEY_LOCAL_PORT, c->local_port);
   _write_config_prop_str(cf, KEY_DEVICE_IP, c->device_ip);
   _write_config_prop_unsigned(cf, KEY_DEVICE_PORT, c->device_port);
@@ -124,13 +128,17 @@ int load_config(config_t *c, FILE *config_file) {
       _read_config_prop_uint16(buf, &c->repeat_count);
     }
 
-    if(has_prefix(buf, KEY_SAMPLE_COUNT2)) {
-      _read_config_prop_uint16(buf, &c->sample_count2);
+    if(has_prefix(buf, KEY_DOWN_SAMPLE_COUNT)) {
+      _read_config_prop_uint16(buf, &c->down_sample_count);
     }
 
     if(has_prefix(buf, KEY_LOCAL_IP)) {
       _read_config_prop_str(buf, c->local_ip);
     }
+
+#if NEW_LOCAL_IP
+  _read_config_prop_str(cf, NEW_KEY_LOCAL_IP, c->new_local_ip);
+#endif
 
     if(has_prefix(buf, KEY_LOCAL_PORT)) {
       _read_config_prop_unsigned(buf, &c->local_port);

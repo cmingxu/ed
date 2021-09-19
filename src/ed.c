@@ -276,7 +276,7 @@ static int _pack_config(config_t *c, char *packed) {
   _pack_uint16(pos, c->repeat_count);
   pos+=2;
 
-  _pack_uint16(pos, c->sample_count2);
+  _pack_uint16(pos, c->down_sample_count);
   pos+=2;
 
   _pack_uint32(pos, ip_to_int(c->device_ip));
@@ -287,6 +287,11 @@ static int _pack_config(config_t *c, char *packed) {
 
   _pack_short(pos, c->outer_trigger);
   pos+=1;
+
+#ifdef NEW_LOCAL_IP
+  _pack_uint32(pos, ip_to_int(c->new_local_ip));
+  pos+=4;
+#endif
 
   return 0;
 }

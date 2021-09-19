@@ -13,8 +13,17 @@ build-static: ensure_bin
 	ar rcs bin/libed.a bin/config.o bin/ed.o bin/utils.o
 	ranlib bin/libed.a
 
-test: ensure_bin
-	${CC} -o bin/test -I./include test/test.c src/ed.c src/config.c src/utils.c -DED_DEBUG
+happy-path: ensure_bin
+	${CC} -o bin/happy-path -I./include test/happy-path.c src/ed.c src/config.c src/utils.c -DED_DEBUG -DNEW_LCOAL_IP
+
+update-new-local-ip: ensure_bin
+	${CC} -o bin/update-new-local-ip -I./include test/update-new-local-ip.c src/ed.c src/config.c src/utils.c -DED_DEBUG -DNEW_LCOAL_IP
+
+update-new-device-ip: ensure_bin
+	${CC} -o bin/update-new-device-ip -I./include test/update-new-device-ip.c src/ed.c src/config.c src/utils.c -DED_DEBUG -DNEW_LCOAL_IP
+
+connect-tool: ensure_bin
+	${CC} -o bin/connect-tool -I./include test/connect-tool.c src/ed.c src/config.c src/utils.c -DED_DEBUG -DNEW_LCOAL_IP
 
 ensure_bin:
 	mkdir -p bin
