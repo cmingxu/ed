@@ -53,8 +53,14 @@ int load_default_config(config_t * c) {
   strncpy(c->local_ip, default_local_ip, strlen(default_local_ip));
   c->local_port = default_local_port;
 
+#ifdef NEW_LOCAL_IP
+  strncpy(c->new_local_ip, default_local_ip, strlen(default_local_ip));
+  c->new_local_port = default_local_port;
+#endif
+
   strncpy(c->device_ip, default_device_ip, strlen(default_device_ip));
   c->device_port = default_device_port;
+
 
   c->ad_channel = ADCHANNEL_SINGLE;
   c->ad_bit = ADBIT_12;

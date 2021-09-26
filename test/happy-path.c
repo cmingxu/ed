@@ -53,6 +53,7 @@ int main(int argc, const char *argv[])
     exit(1);
   }
 
+
   // 停止接受, 防止之前有采集任务, 可多次调用
   stop_collect(c1, a1);
 
@@ -62,6 +63,7 @@ int main(int argc, const char *argv[])
   // 开启数据采集到文件标志
   enable_cache(c1);
 
+  if(0) {
   // 通知设备开始采集
   start_collect(c1, a1);
 
@@ -74,6 +76,8 @@ int main(int argc, const char *argv[])
 
   // 停止采集
   stop_collect(c1, a1);
+  }
+
 
   // 断开连接
   disconnect_device(c1, a1);
