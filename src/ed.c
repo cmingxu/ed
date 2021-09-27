@@ -146,6 +146,53 @@ int start_collect(config_t *c, addr_t *addr){
   return START_COLLECT_SUCCESS;
 }
 
+size_t start_recv_in_buf(config_t *c, addr_t *addr, void *buf, size_t size){
+  ED_LOG("start_recv_in_buf: %s", c->device_ip);
+
+  unsigned int received_byte_count = 0;
+  unsigned int expected_byte_count = _sample_bytes_count(c) * c->repeat_count;
+  unsigned int sample_index = 0;
+
+  if(size < expected_byte_count) {
+     ED_LOG("buf size not big enough, expected %d", expected_byte_count);
+  }
+  memset(buf, '\0', size);
+
+  char tmp[MTU];
+  _settimeout(addr, 500);
+  for (; sample_index < c->repeat_count; sample_index++) {
+    int packet_count = ceil(_sample_bytes_count(c) / (float)MTU);
+    unsigned int packet_index = 0;
+    while(packet_index < packet_count) {
+      memset(tmp, 0, MTU);
+      int nread = _read(addr, tmp, MTU);
+
+      if(nread == -1) {
+        ED_LOG("start_recv failed: %s", strerror(errno));
+      }
+
+      // if packet size 32 and not last packet, should be stop_collect response
+      if(nread == 32 && packet_index != ( packet_count -1)) {
+        char expected[8];
+        _pack_char_arr(expected, CODE_STOP_COLLECT_RESPONSE, 8);
+        _debug_hex(tmp, 32);
+        if(memcmp(tmp, expected, 8) != 0 ) {
+          ED_LOG("stop_collect response received while receiving normal data %s", "");
+          goto end;
+        }
+      }
+
+      memcpy(buf + received_byte_count, tmp, nread);
+      received_byte_count += nread;
+      packet_index += 1;
+    }
+  }
+
+  ED_LOG("total received bytes count %d\n", received_byte_count);
+end:
+  return received_byte_count;
+}
+
 void start_recv(config_t *c, addr_t *addr, FILE *file){
   ED_LOG("start_recv: %s", c->device_ip);
 
