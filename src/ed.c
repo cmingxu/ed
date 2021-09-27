@@ -155,7 +155,7 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
 
   if(size < expected_byte_count) {
      ED_LOG("buf size not big enough, expected %d", expected_byte_count);
-     goto end;
+     return 0;
   }
   memset(buf, '\0', size);
 
@@ -172,7 +172,7 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
 
       if(nread == -1) {
         ED_LOG("start_recv failed: %s", strerror(errno));
-        goto end;
+        return received_byte_count;
       }
 
       // if packet size 32 and not last packet, should be stop_collect response
@@ -182,7 +182,7 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
         _debug_hex(tmp, 32);
         if(memcmp(tmp, expected, 8) != 0 ) {
           ED_LOG("stop_collect response received while receiving normal data %s", "");
-          goto end;
+          return received_byte_count;
         }
       }
 
@@ -193,7 +193,6 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
   }
 
   ED_LOG("total received bytes count %d\n", received_byte_count);
-end:
   return received_byte_count;
 }
 
