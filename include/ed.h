@@ -110,6 +110,9 @@ int load_config(config_t*, FILE *);
 // 计算数据包数量
 unsigned int package_count(config_t *);
 
+// 计算数据bytecount
+unsigned int bytes_count(config_t *);
+
 // 使能数据存储
 int enable_cache(config_t *);
 
@@ -128,8 +131,11 @@ int start_collect(config_t *, addr_t *);
 #define STOP_COLLECT_FAIL 10001
 int stop_collect(config_t *, addr_t *);
 
-// 开始数据接收
-void start_recv(config_t *, addr_t *, FILE *);
+// 开始数据接收 - 存入文件
+void start_recv_with_file(config_t *, addr_t *, FILE *);
+
+// 开始数据接收 - 存入内存
+size_t start_recv(config_t *, addr_t *, void *buf, size_t size);
 
 #define MYLOG(fmt, ...) do {	\
 		fprintf(stdout, "[LOG] %s:%d: " fmt "\n", __FUNCTION__,__LINE__, __VA_ARGS__); \

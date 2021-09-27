@@ -146,8 +146,8 @@ int start_collect(config_t *c, addr_t *addr){
   return START_COLLECT_SUCCESS;
 }
 
-size_t start_recv_in_buf(config_t *c, addr_t *addr, void *buf, size_t size){
-  ED_LOG("start_recv_in_buf: %s", c->device_ip);
+size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
+  ED_LOG("start_recv: %s", c->device_ip);
 
   unsigned int received_byte_count = 0;
   unsigned int expected_byte_count = _sample_bytes_count(c) * c->repeat_count;
@@ -155,11 +155,14 @@ size_t start_recv_in_buf(config_t *c, addr_t *addr, void *buf, size_t size){
 
   if(size < expected_byte_count) {
      ED_LOG("buf size not big enough, expected %d", expected_byte_count);
+     goto end;
   }
   memset(buf, '\0', size);
 
   char tmp[MTU];
-  _settimeout(addr, 500);
+  _settimeout(addr, 200);
+
+  // for each sample
   for (; sample_index < c->repeat_count; sample_index++) {
     int packet_count = ceil(_sample_bytes_count(c) / (float)MTU);
     unsigned int packet_index = 0;
@@ -169,6 +172,7 @@ size_t start_recv_in_buf(config_t *c, addr_t *addr, void *buf, size_t size){
 
       if(nread == -1) {
         ED_LOG("start_recv failed: %s", strerror(errno));
+        goto end;
       }
 
       // if packet size 32 and not last packet, should be stop_collect response
@@ -193,7 +197,7 @@ end:
   return received_byte_count;
 }
 
-void start_recv(config_t *c, addr_t *addr, FILE *file){
+void start_recv_with_file(config_t *c, addr_t *addr, FILE *file){
   ED_LOG("start_recv: %s", c->device_ip);
 
   unsigned int received_byte_count = 0;
@@ -286,6 +290,13 @@ unsigned int package_count(config_t *c) {
   }else{
     return ceil(single_repeat_bytes_count / (float)MTU)  * c->repeat_count;
   }
+}
+
+unsigned int bytes_count(config_t *c) {
+  ED_LOG("bytes_count: %s", c->device_ip);
+  assert(c);
+
+  return c->sample_count * 2 * c->ad_channel * c->repeat_count;
 }
 
 int enable_cache(config_t *c) {
