@@ -87,8 +87,6 @@ int set_new_local_addr(config_t *, const char*, unsigned int);
 #define CONNECT_VERIFY_ERR 10003
 int connect_device(config_t *, addr_t *);
 
-// 断开连接
-int disconnect_device(config_t *, addr_t *);
 
 // 发送配置信息
 #define SEND_CONFIG_SUCCESS 0
@@ -118,6 +116,15 @@ int enable_cache(config_t *);
 
 // 禁用数据存储
 int disable_cache(config_t *);
+
+
+// 初始化socket链接
+#define ESTABLISH_CONNECTION_SUCCESS 0
+#define ESTABLISH_CONNECTION_BIND_FAIL 10001
+#define ESTABLISH_CONNECTION_CONNECT_FAIL 10002
+int establish_connection(config_t *t, addr_t *);
+// 清理socket链接
+int teardown_connection(config_t *, addr_t *);
 
 // 内部触发
 #define START_COLLECT_SUCCESS 0

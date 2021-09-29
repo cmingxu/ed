@@ -143,7 +143,9 @@ int load_config(config_t *c, FILE *config_file) {
     }
 
 #if NEW_LOCAL_IP
-  _read_config_prop_str(cf, NEW_KEY_LOCAL_IP, c->new_local_ip);
+    if(has_prefix(buf, NEW_KEY_LOCAL_IP)) {
+  _read_config_prop_str(buf, c->new_local_ip);
+    }
 #endif
 
     if(has_prefix(buf, KEY_LOCAL_PORT)) {

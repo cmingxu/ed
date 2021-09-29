@@ -23,6 +23,9 @@ int main(int argc, const char *argv[])
   printf("%d\n", c->device_port);
   printf("%s\n", c->device_ip);
 
+  config_t *c1 = (config_t *)malloc(sizeof(config_t));
+  load_default_config(c1);
+#ifdef CONFIG_SERIALIZE
   // 写入配置
   FILE *fp = fopen("/tmp/ed_config", "w+");
   if (fp == NULL) {
@@ -36,18 +39,24 @@ int main(int argc, const char *argv[])
   if (fp1 == NULL) {
     perror("fail open config");
   }
-  config_t *c1 = (config_t *)malloc(sizeof(config_t));
   load_config(c1, fp1);
 
-  // 计算包数量
-  printf("%d\n", package_count(c1));
-  assert(package_count(c1) == 4077);
   fclose(fp1);
+#endif
 
   // 连接设备
   addr_t *a1 = (addr_t *)malloc(sizeof(addr_t));
   memset(a1, '\0', sizeof(addr_t));
   printf("%lu\n", sizeof(addr_t));
+
+  int establish_res;
+  if((establish_res = establish_connection(c1, a1)) != 0) {
+    printf("establish_connection failed %d\n", establish_res);
+    exit(1);
+  }
+  // 停止接受, 防止之前有采集任务, 可多次调用
+  stop_collect(c1, a1);
+
   int r = connect_device(c1, a1);
   if (r != CONNECT_SUCCESS) {
     exit(1);
@@ -75,7 +84,7 @@ int main(int argc, const char *argv[])
   free(buf);
 
   // 断开连接
-  disconnect_device(c1, a1);
+  teardown_connection(c1, a1);
 
   return 0;
 }

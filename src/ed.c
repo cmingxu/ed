@@ -29,8 +29,7 @@ static void _settimeout(addr_t *, unsigned int);
 static void _setbuf(addr_t *);
 static unsigned int _sample_bytes_count(config_t *);
 
-// 核心功能函数
-int connect_device(config_t *c, addr_t *addr) {
+int establish_connection(config_t *c, addr_t *addr) {
   ED_LOG("connect device: %s", c->device_ip);
   assert(c);
   assert(addr);
@@ -50,17 +49,23 @@ int connect_device(config_t *c, addr_t *addr) {
   addr->socket = socket(AF_INET, SOCK_DGRAM, 0);
   if (bind(addr->socket, (struct sockaddr *) &(addr->localaddr), sizeof(addr->localaddr)) < 0) {
     ED_LOG("bind failed: %s", strerror(errno));
-    return CONNECT_FAIL;
+    return ESTABLISH_CONNECTION_BIND_FAIL;
   }
 
   // connect to device UDP endpoint
   if(connect(addr->socket, (struct sockaddr *)&addr->deviceaddr, sizeof(addr->deviceaddr)) < 0) {
     ED_LOG("connect failed: %s", strerror(errno));
-    return CONNECT_FAIL;
+    return ESTABLISH_CONNECTION_CONNECT_FAIL;
   }
 
   _setbuf(addr);
+  return 0;
+}
 
+// 核心功能函数
+int connect_device(config_t *c, addr_t *addr) {
+  assert(c);
+  assert(addr);
   // sending connect request
   char message[32];
   memset(message, '\0', 32);
@@ -87,7 +92,7 @@ int connect_device(config_t *c, addr_t *addr) {
   return CONNECT_SUCCESS;
 }
 
-int disconnect_device(config_t *c, addr_t *addr) {
+int teardown_connection(config_t *c, addr_t *addr) {
   if(addr->socket != 0){
     close(addr->socket);
   }
@@ -160,7 +165,7 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
   memset(buf, '\0', size);
 
   char tmp[MTU];
-  _settimeout(addr, 200);
+  _settimeout(addr, 2000);
 
   // for each sample
   for (; sample_index < c->repeat_count; sample_index++) {
@@ -364,9 +369,12 @@ static size_t _read(addr_t *addr, char *buf, size_t size){
 }
 
 static void _settimeout(addr_t *addr, unsigned int milliseconds) {
+  unsigned int nano = milliseconds * 1000;
+
   struct timeval tv;
-  tv.tv_sec = 0;
-  tv.tv_usec = 1000 * milliseconds;
+  tv.tv_sec = nano / (1000 * 1000);
+  tv.tv_usec = nano % (1000 * 1000);
+
   if (setsockopt(addr->socket, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
     ED_LOG("setsockopt timeout error: %s", strerror(errno));
   }
