@@ -19,6 +19,7 @@ int main(int argc, const char *argv[])
   printf("default device ip: %s\n", c->device_ip);
 
   addr_t *a1 = (addr_t *)malloc(sizeof(addr_t));
+  establish_connection(c,         a1);
   int r = connect_device(c, a1);
   if (r != CONNECT_SUCCESS) {
     exit(1);
@@ -30,7 +31,7 @@ int main(int argc, const char *argv[])
   scanf("%d", &c->new_local_port);
   getchar();
   send_config_to_device(c, a1);
-  disconnect_device(c, a1);
+  teardown_connection(c, a1);
 
   return 0;
 }

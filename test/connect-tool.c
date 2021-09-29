@@ -41,12 +41,13 @@ int main(int argc, const char *argv[])
   getchar();
 
   addr_t *a = (addr_t *)malloc(sizeof(addr_t));
+  establish_connection(c, a);
   int r = connect_device(c, a);
   if (r != CONNECT_SUCCESS) {
     exit(1);
   }
 
-  disconnect_device(c, a);
+  teardown_connection(c, a);
 
   return 0;
 }
