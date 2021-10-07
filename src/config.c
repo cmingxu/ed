@@ -64,7 +64,7 @@ int load_default_config(config_t * c) {
 
   c->ad_channel = ADCHANNEL_SINGLE;
   c->ad_bit = ADBIT_12;
-  c->trigger = TRIGGER_INNER;
+  c->trigger = TRIGGER_OUTER;
   c->outer_trigger = OUTER_TRIGGER_DOWN;
 
   return 0;

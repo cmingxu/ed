@@ -165,7 +165,7 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
   memset(buf, '\0', size);
 
   char tmp[MTU];
-  _settimeout(addr, 2000);
+  _settimeout(addr, 0);
 
   // for each sample
   for (; sample_index < c->repeat_count; sample_index++) {
