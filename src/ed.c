@@ -165,18 +165,18 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
   memset(buf, '\0', size);
 
   char tmp[MTU];
-  _settimeout(addr, 0);
+  _settimeout(addr, 5000);
 
   // for each sample
   for (; sample_index < c->repeat_count; sample_index++) {
     int packet_count = ceil(_sample_bytes_count(c) / (float)MTU);
     unsigned int packet_index = 0;
     while(packet_index < packet_count) {
-      memset(tmp, 0, MTU);
       int nread = _read(addr, tmp, MTU);
 
+      /*usleep(10);*/
       if(nread == -1) {
-        ED_LOG("start_recv failed: %s", strerror(errno));
+        ED_LOG("start_recv failed:%s", strerror(errno));
         return received_byte_count;
       }
 
@@ -191,6 +191,8 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
         }
       }
 
+          ED_LOG("sample_index %d, nread %d, received_byte_count: %d, packet_count %d, packet_index: %d", 
+              sample_index, nread, received_byte_count, packet_count, packet_index);
       memcpy(buf + received_byte_count, tmp, nread);
       received_byte_count += nread;
       packet_index += 1;
