@@ -53,10 +53,8 @@ int load_default_config(config_t * c) {
   strncpy(c->local_ip, default_local_ip, strlen(default_local_ip));
   c->local_port = default_local_port;
 
-#ifdef NEW_LOCAL_IP
   strncpy(c->new_local_ip, default_local_ip, strlen(default_local_ip));
   c->new_local_port = default_local_port;
-#endif
 
   strncpy(c->device_ip, default_device_ip, strlen(default_device_ip));
   c->device_port = default_device_port;
@@ -97,9 +95,7 @@ int write_config(config_t *c, FILE *cf) {
   _write_config_prop_uint16(cf, KEY_REPEAT_COUNT, c->repeat_count);
   _write_config_prop_uint16(cf, KEY_DOWN_SAMPLE_COUNT, c->down_sample_count);
   _write_config_prop_str(cf, KEY_LOCAL_IP, c->local_ip);
-#if NEW_LOCAL_IP
   _write_config_prop_str(cf, NEW_KEY_LOCAL_IP, c->new_local_ip);
-#endif
   _write_config_prop_unsigned(cf, KEY_LOCAL_PORT, c->local_port);
   _write_config_prop_str(cf, KEY_DEVICE_IP, c->device_ip);
   _write_config_prop_unsigned(cf, KEY_DEVICE_PORT, c->device_port);
@@ -142,11 +138,9 @@ int load_config(config_t *c, FILE *config_file) {
       _read_config_prop_str(buf, c->local_ip);
     }
 
-#if NEW_LOCAL_IP
     if(has_prefix(buf, NEW_KEY_LOCAL_IP)) {
-  _read_config_prop_str(buf, c->new_local_ip);
+      _read_config_prop_str(buf, c->new_local_ip);
     }
-#endif
 
     if(has_prefix(buf, KEY_LOCAL_PORT)) {
       _read_config_prop_unsigned(buf, &c->local_port);

@@ -4,7 +4,7 @@ CC = gcc
 
 default: build
 build: ensure_bin
-	${CC} -shared -o bin/libed.so -fPIC -I./include src/ed.c src/config.c src/utils.c -lm -DED_DEBUG -DNEW_LOCAL_IP
+	${CC} -shared -o bin/libed.so -fPIC -I./include src/ed.c src/config.c src/utils.c -lm -DED_DEBUG 
 	
 build-static: ensure_bin
 	${CC} -I./include -o bin/config.o -c src/config.c -lm
@@ -14,16 +14,16 @@ build-static: ensure_bin
 	ranlib bin/libed.a
 
 happy-path: ensure_bin
-	${CC} -o bin/happy-path -I./include test/happy-path.c src/ed.c src/config.c src/utils.c -lm -DED_DEBUG -DNEW_LOCAL_IP
+	${CC} -o bin/happy-path -I./include test/happy-path.c src/ed.c src/config.c src/utils.c -lm -DED_DEBUG 
 
 update-new-local-ip: ensure_bin
-	${CC} -o bin/update-new-local-ip -I./include test/update-new-local-ip.c src/ed.c src/config.c src/utils.c -lm -DED_DEBUG -DNEW_LOCAL_IP
+	${CC} -o bin/update-new-local-ip -I./include test/update-new-local-ip.c src/ed.c src/config.c src/utils.c -lm -DED_DEBUG 
 
 update-new-device-ip: ensure_bin
-	${CC} -o bin/update-new-device-ip -I./include test/update-new-device-ip.c src/ed.c src/config.c src/utils.c -lm -DED_DEBUG -DNEW_LOCAL_IP
+	${CC} -o bin/update-new-device-ip -I./include test/update-new-device-ip.c src/ed.c src/config.c src/utils.c -lm -DED_DEBUG 
 
 connect-tool: ensure_bin
-	${CC} -o bin/connect-tool -I./include test/connect-tool.c src/ed.c src/config.c src/utils.c -lm -DED_DEBUG -DNEW_LOCAL_IP
+	${CC} -o bin/connect-tool -I./include test/connect-tool.c src/ed.c src/config.c src/utils.c -lm -DED_DEBUG 
 
 ensure_bin:
 	mkdir -p bin

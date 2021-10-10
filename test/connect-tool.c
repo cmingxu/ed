@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define NEW_LOCAL_IP 1
 #include "ed.h"
 
 int main(int argc, const char *argv[])

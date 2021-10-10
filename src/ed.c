@@ -191,8 +191,8 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
         }
       }
 
-          ED_LOG("sample_index %d, nread %d, received_byte_count: %d, packet_count %d, packet_index: %d", 
-              sample_index, nread, received_byte_count, packet_count, packet_index);
+      /*ED_LOG("sample_index %d, nread %d, received_byte_count: %d, packet_count %d, packet_index: %d", */
+          /*sample_index, nread, received_byte_count, packet_count, packet_index);*/
       memcpy(buf + received_byte_count, tmp, nread);
       received_byte_count += nread;
       packet_index += 1;
@@ -213,7 +213,7 @@ void start_recv_with_file(config_t *c, addr_t *addr, FILE *file){
   char *cache = (char *)malloc(expected_byte_count);
   char buf[MTU];
 
-  _settimeout(addr, 500);
+  _settimeout(addr, 5000);
   for (; sample_index < c->repeat_count; sample_index++) {
     int packet_count = ceil(_sample_bytes_count(c) / (float)MTU);
     unsigned int packet_index = 0;
@@ -268,19 +268,19 @@ int stop_collect(config_t *c, addr_t *addr){
     return STOP_COLLECT_FAIL;
   }
 
-  _settimeout(addr, 0);
+  _settimeout(addr, 5000);
   // recv connect response
   char stop_collect_resp[32];
   if(_read(addr, stop_collect_resp, 32) != 32) {
     ED_LOG("read faild: %s", strerror(errno));
-    return CONNECT_FAIL;
+    return STOP_COLLECT_FAIL;
   }
 
   char expected[8];
   _pack_char_arr(expected, CODE_STOP_COLLECT_RESPONSE, 8);
   _debug_hex(stop_collect_resp, 32);
   if(memcmp(stop_collect_resp, expected, 8) != 0 ) {
-    return SEND_CONFIG_VERIFY_ERR;
+    return STOP_COLLECT_VERIFY_FAIL;
   }
 
   return STOP_COLLECT_SUCCESS;
@@ -352,10 +352,8 @@ static int _pack_config(config_t *c, char *packed) {
   _pack_short(pos, c->outer_trigger);
   pos+=1;
 
-#ifdef NEW_LOCAL_IP
   _pack_uint32(pos, ip_to_int(c->new_local_ip));
   pos+=4;
-#endif
 
   return 0;
 }

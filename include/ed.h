@@ -45,12 +45,10 @@ struct config{
 
   bool storage_enabled;
 
- #ifdef NEW_LOCAL_IP
   // 新IP
   char new_local_ip[32];
   // 新port
   unsigned int new_local_port;
- #endif
 };
 typedef struct config config_t;
 
@@ -59,9 +57,7 @@ int load_default_config(config_t *);
 int set_local_addr(config_t *, const char*, unsigned int);
 int set_device_addr(config_t *, const char*, unsigned int);
 
-#ifdef NEW_LOCAL_IP
 int set_new_local_addr(config_t *, const char*, unsigned int);
-#endif
 
 
 // AD 通道数 默认 1(1:单通道;2:双通道);
@@ -136,6 +132,7 @@ int start_collect(config_t *, addr_t *);
 // 停止采集
 #define STOP_COLLECT_SUCCESS 0
 #define STOP_COLLECT_FAIL 10001
+#define STOP_COLLECT_VERIFY_FAIL 10002
 int stop_collect(config_t *, addr_t *);
 
 // 开始数据接收 - 存入文件
