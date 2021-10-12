@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -11,7 +10,7 @@
 
 // default buf size
 static const unsigned int BUFSIZE = 2 << 10;
-static const unsigned int MTU = 1472;
+static const unsigned int MTU = 1464;
 
 // 指令码
 static const char CODE_CONNECT_REQURST[8] = {0x31, 0xB3, 0x59, 0xC6, 0x47, 0xD8, 0x5A, 0xC3};
@@ -27,9 +26,10 @@ static size_t _write(addr_t *, char *buf, size_t);
 static size_t _read(addr_t *, char *buf, size_t);
 static void _settimeout(addr_t *, unsigned int);
 static void _setbuf(addr_t *);
-static unsigned int _sample_bytes_count(config_t *);
+static unsigned int _package_count_of_each_repeat(config_t *c);
 
-int establish_connection(config_t *c, addr_t *addr) {
+int 
+establish_connection(config_t *c, addr_t *addr) {
   ED_LOG("connect device: %s", c->device_ip);
   assert(c);
   assert(addr);
@@ -63,7 +63,8 @@ int establish_connection(config_t *c, addr_t *addr) {
 }
 
 // 核心功能函数
-int connect_device(config_t *c, addr_t *addr) {
+int 
+connect_device(config_t *c, addr_t *addr) {
   assert(c);
   assert(addr);
   // sending connect request
@@ -101,7 +102,8 @@ int teardown_connection(config_t *c, addr_t *addr) {
   return 1;
 }
 
-int send_config_to_device(config_t *c, addr_t *addr) {
+int
+send_config_to_device(config_t *c, addr_t *addr) {
   ED_LOG("send_config_to_device: %s", c->device_ip);
 
   char buf[32];
@@ -134,7 +136,8 @@ int send_config_to_device(config_t *c, addr_t *addr) {
 
 
 // 内部触发命令
-int start_collect(config_t *c, addr_t *addr){
+int
+start_collect(config_t *c, addr_t *addr){
   ED_LOG("start_collect: %s", c->device_ip);
 
   char buf[32];
@@ -151,16 +154,57 @@ int start_collect(config_t *c, addr_t *addr){
   return START_COLLECT_SUCCESS;
 }
 
-size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
+size_t 
+start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigned int repeat){
+  ED_LOG("start_recv_by_repeat: %s", c->device_ip);
+
+  assert(resp->data);
+  assert(resp->data_size > 0);
+
+  unsigned int received_byte_count = 0;
+  unsigned int packet_start = _package_count_of_each_repeat(c) * repeat;
+  unsigned int packet_end = _package_count_of_each_repeat(c) * (repeat + 1);
+  unsigned int expected_byte_count = repeat_bytes_count(c) * c->repeat_count;
+
+  memset(resp->data, '\0', resp->data_size);
+
+  char tmp[MTU];
+  for (unsigned int package_index = packet_start; package_index < packet_end; package_index ++) {
+    int nread = _read(addr, tmp, MTU);
+
+    /*usleep(10);*/
+    if(nread == -1) {
+      ED_LOG("start_recv failed:%s", strerror(errno));
+      return received_byte_count;
+    }
+
+    // if packet size 32 and not last packet, should be stop_collect response
+    if(nread == 32) {
+      char expected[8];
+      _pack_char_arr(expected, CODE_STOP_COLLECT_RESPONSE, 8);
+      if(memcmp(tmp, expected, 8) != 0 ) {
+        ED_LOG("stop_collect response received while receiving normal data %s", "");
+        return received_byte_count;
+      }
+    }
+
+    received_byte_count += nread;
+  }
+
+  return received_byte_count;
+}
+
+size_t 
+start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
   ED_LOG("start_recv: %s", c->device_ip);
 
   unsigned int received_byte_count = 0;
-  unsigned int expected_byte_count = _sample_bytes_count(c) * c->repeat_count;
+  unsigned int expected_byte_count = repeat_bytes_count(c) * c->repeat_count;
   unsigned int sample_index = 0;
 
   if(size < expected_byte_count) {
-     ED_LOG("buf size not big enough, expected %d", expected_byte_count);
-     return 0;
+    ED_LOG("buf size not big enough, expected %d", expected_byte_count);
+    return 0;
   }
   memset(buf, '\0', size);
 
@@ -169,7 +213,7 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
 
   // for each sample
   for (; sample_index < c->repeat_count; sample_index++) {
-    int packet_count = ceil(_sample_bytes_count(c) / (float)MTU);
+    int packet_count = _package_count_of_each_repeat(c);
     unsigned int packet_index = 0;
     while(packet_index < packet_count) {
       int nread = _read(addr, tmp, MTU);
@@ -192,7 +236,7 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
       }
 
       /*ED_LOG("sample_index %d, nread %d, received_byte_count: %d, packet_count %d, packet_index: %d", */
-          /*sample_index, nread, received_byte_count, packet_count, packet_index);*/
+      /*sample_index, nread, received_byte_count, packet_count, packet_index);*/
       memcpy(buf + received_byte_count, tmp, nread);
       received_byte_count += nread;
       packet_index += 1;
@@ -203,59 +247,10 @@ size_t start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
   return received_byte_count;
 }
 
-void start_recv_with_file(config_t *c, addr_t *addr, FILE *file){
-  ED_LOG("start_recv: %s", c->device_ip);
-
-  unsigned int received_byte_count = 0;
-  unsigned int expected_byte_count = _sample_bytes_count(c) * c->repeat_count;
-  unsigned int sample_index = 0;
-
-  char *cache = (char *)malloc(expected_byte_count);
-  char buf[MTU];
-
-  _settimeout(addr, 5000);
-  for (; sample_index < c->repeat_count; sample_index++) {
-    int packet_count = ceil(_sample_bytes_count(c) / (float)MTU);
-    unsigned int packet_index = 0;
-    while(packet_index < packet_count) {
-      memset(buf, 0, MTU);
-      int nread = _read(addr, buf, MTU);
-
-      if(nread == -1) {
-        ED_LOG("start_recv failed: %s", strerror(errno));
-        goto cleanup;
-      }
-
-      // if packet size 32 and not last packet, should be stop_collect response
-      if(nread == 32 && packet_index != ( packet_count -1)) {
-        char expected[8];
-        _pack_char_arr(expected, CODE_STOP_COLLECT_RESPONSE, 8);
-        _debug_hex(buf, 32);
-        if(memcmp(buf, expected, 8) != 0 ) {
-          ED_LOG("stop_collect response received while receiving normal data %s", "");
-          goto cleanup;
-        }
-      }
-
-      received_byte_count += nread;
-      packet_index += 1;
-    }
-  }
-
-  ED_LOG("total received bytes count %d\n", received_byte_count);
-  if(c->storage_enabled) {
-    fwrite(buf, 4096, received_byte_count, file);
-  }
-  fflush(file);
-
-cleanup:
-  free(cache);
-  return;
-}
-
 // 停止采集
 // NOTES: stop_collect response take more then 1s to return
-int stop_collect(config_t *c, addr_t *addr){
+int
+stop_collect(config_t *c, addr_t *addr){
   char buf[32];
   memset(buf, '\0', 32);
   _pack_char_arr(buf, CODE_STOP_COLLECT_REQUEST, 8);
@@ -286,47 +281,33 @@ int stop_collect(config_t *c, addr_t *addr){
   return STOP_COLLECT_SUCCESS;
 }
 
-unsigned int package_count(config_t *c) {
+unsigned int 
+package_count(config_t *c) {
   ED_LOG("package_count: %s", c->device_ip);
   assert(c);
 
-  unsigned single_repeat_bytes_count = c->sample_count * 2 * c->ad_channel;
-  if (single_repeat_bytes_count % MTU == 0) {
-    return single_repeat_bytes_count / MTU * c->repeat_count;
-  }else{
-    return ceil(single_repeat_bytes_count / (float)MTU)  * c->repeat_count;
-  }
+  return _package_count_of_each_repeat(c) * c->repeat_count;
 }
 
-unsigned int bytes_count(config_t *c) {
+unsigned int
+bytes_count(config_t *c) {
   ED_LOG("bytes_count: %s", c->device_ip);
   assert(c);
 
   return c->sample_count * 2 * c->ad_channel * c->repeat_count;
 }
 
-int enable_cache(config_t *c) {
-  assert(c);
-
-  c->storage_enabled = true;
-  return 1;
-}
-
-int disable_cache(config_t *c) {
-  assert(c);
-
-  c->storage_enabled = false;
-  return 1;
-}
-
-//////////////////////////// STATIC FUNCTIONS ///////////////////
-static unsigned int
-_sample_bytes_count(config_t *c) {
+unsigned int repeat_bytes_count(config_t *c) {
   return  c->sample_count * 2 * c->ad_channel;
 }
+//////////////////////////// STATIC FUNCTIONS ///////////////////
+static unsigned int
+_package_count_of_each_repeat(config_t *c) {
+  return ceil(repeat_bytes_count(c) / (float)MTU);
+}
 
-
-static int _pack_config(config_t *c, char *packed) {
+static int
+_pack_config(config_t *c, char *packed) {
   char *pos = packed;
   _pack_char_arr(pos, CODE_SEND_CONFIG_REQUEST, 8);
   pos+=8;
@@ -358,17 +339,20 @@ static int _pack_config(config_t *c, char *packed) {
   return 0;
 }
 
-static size_t _write(addr_t *addr, char *buf, size_t size){
+static size_t 
+_write(addr_t *addr, char *buf, size_t size){
   ED_LOG("write %lu bytes to %d", size, addr->socket);
   return sendto(addr->socket, buf, size, 0, (struct sockaddr*)NULL, sizeof(addr->deviceaddr));
 }
 
-static size_t _read(addr_t *addr, char *buf, size_t size){
+static size_t 
+_read(addr_t *addr, char *buf, size_t size){
   /*ED_LOG("recvfrom %d", addr->socket);*/
   return recvfrom(addr->socket, buf, size, 0, (struct sockaddr*)NULL, NULL);
 }
 
-static void _settimeout(addr_t *addr, unsigned int milliseconds) {
+static void
+_settimeout(addr_t *addr, unsigned int milliseconds) {
   unsigned int nano = milliseconds * 1000;
 
   struct timeval tv;
@@ -380,7 +364,8 @@ static void _settimeout(addr_t *addr, unsigned int milliseconds) {
   }
 }
 
-static void _setbuf(addr_t *addr) {
+static void
+_setbuf(addr_t *addr) {
   int n = 4 * 1024 * 1024; // 20M
   if (setsockopt(addr->socket, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1) {
     ED_LOG("setsockopt buffer error: %s", strerror(errno));
