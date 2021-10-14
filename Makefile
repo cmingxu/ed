@@ -4,7 +4,7 @@ CC = gcc
 
 default: build
 build: ensure_bin
-	${CC} -shared -o bin/libed.so -fPIC -I./include src/ed.c src/config.c src/utils.c -lm -DED_DEBUG 
+	${CC} -shared -o bin/libed.so -fPIC -I./include src/ed.c src/config.c src/utils.c -lm
 	
 build-static: ensure_bin
 	${CC} -I./include -o bin/config.o -c src/config.c -lm

@@ -144,23 +144,27 @@ int start_collect(config_t *, addr_t *);
 #define STOP_COLLECT_VERIFY_FAIL 10002
 int stop_collect(config_t *, addr_t *);
 
+// 开始数据接收 - 每次读取一个
+// @param - config_t 配置
+// @param - addr_t 地址
+// @param - repeat_response_t 回包结构，data字段需要提前申请内存
+// @param - repeat 从0 - c->repeat_count顺序增加，如果从设备接受的packet不属于此范围则丢弃
+#define START_RECV_SUCCESS 10000
+#define START_RECV_PACKET_LOSS 10001
+#define START_RECV_INVALID_PACKET_LEN 10002
+int start_recv_by_repeat(config_t *, addr_t *, repeat_response_t *, unsigned int repeat);
+
 // 开始数据接收 - 存入内存
 size_t start_recv(config_t *, addr_t *, void *buf, size_t size);
 
-// 开始数据接收 - 每次读取一个
-// - config_t 配置
-// - addr_t 地址
-// - repeat_response_t 回包结构，data字段需要提前申请内存
-// - repeat 从0 - c->repeat_count顺序增加，如果从设备接受的packet不属于此范围则丢弃
-size_t start_recv_by_repeat(config_t *, addr_t *, repeat_response_t *, unsigned int repeat);
-
-#define MYLOG(fmt, ...) do {	\
-		fprintf(stdout, "[LOG] %s:%d: " fmt "\n", __FUNCTION__,__LINE__, __VA_ARGS__); \
-		fflush(stdout); \
-} while(0)
 
 #ifdef ED_DEBUG
-#define ED_LOG( fmt, ... ) MYLOG(fmt,__VA_ARGS__ )
+#define MYLOG(fmt, ...) do { \
+		fprintf(stdout, "[LOG] %s:%d: " fmt "\n", __FUNCTION__,__LINE__,__VA_ARGS__); \
+		fflush(stdout); \
+} while(0);
+
+#define ED_LOG( fmt, ... ) MYLOG(fmt,__VA_ARGS__)
 #else
 #define ED_LOG( fmt, ... ) {}
 #endif

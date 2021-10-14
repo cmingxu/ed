@@ -26,7 +26,7 @@ static size_t _write(addr_t *, char *buf, size_t);
 static size_t _read(addr_t *, char *buf, size_t);
 static void _settimeout(addr_t *, unsigned int);
 static void _setbuf(addr_t *);
-static unsigned int _package_count_of_each_repeat(config_t *c);
+static unsigned int _packet_count_of_each_repeat(config_t *c);
 
 int 
 establish_connection(config_t *c, addr_t *addr) {
@@ -154,44 +154,55 @@ start_collect(config_t *c, addr_t *addr){
   return START_COLLECT_SUCCESS;
 }
 
-size_t 
+int 
 start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigned int repeat){
-  ED_LOG("start_recv_by_repeat: %s", c->device_ip);
+  ED_LOG("start_recv_by_repeat: %s, repeat %d, resp->data_size: %ld", c->device_ip, repeat, resp->data_size);
 
   assert(resp->data);
   assert(resp->data_size > 0);
+  resp->recv_data_size = 0;
+  resp->recv_packet_count = 0;
 
-  unsigned int received_byte_count = 0;
-  unsigned int packet_start = _package_count_of_each_repeat(c) * repeat;
-  unsigned int packet_end = _package_count_of_each_repeat(c) * (repeat + 1);
-  unsigned int expected_byte_count = repeat_bytes_count(c) * c->repeat_count;
+  unsigned int packet_start = _packet_count_of_each_repeat(c) * repeat;
+  unsigned int packet_end = _packet_count_of_each_repeat(c) * (repeat + 1);
 
+  resp->packet_count = _packet_count_of_each_repeat(c);
   memset(resp->data, '\0', resp->data_size);
 
-  char tmp[MTU];
-  for (unsigned int package_index = packet_start; package_index < packet_end; package_index ++) {
-    int nread = _read(addr, tmp, MTU);
+  _settimeout(addr, 100);
 
-    /*usleep(10);*/
+  char tmp[MTU + 8];
+  for (;;) {
+    int nread = _read(addr, tmp, MTU + 8);
+
     if(nread == -1) {
       ED_LOG("start_recv failed:%s", strerror(errno));
-      return received_byte_count;
+	    return START_RECV_INVALID_PACKET_LEN;
     }
 
-    // if packet size 32 and not last packet, should be stop_collect response
-    if(nread == 32) {
-      char expected[8];
-      _pack_char_arr(expected, CODE_STOP_COLLECT_RESPONSE, 8);
-      if(memcmp(tmp, expected, 8) != 0 ) {
-        ED_LOG("stop_collect response received while receiving normal data %s", "");
-        return received_byte_count;
-      }
+    if(nread < 8) {
+      ED_LOG("start_recv failed: nead length less than %d", 8);
+	    return START_RECV_INVALID_PACKET_LEN;
     }
 
-    received_byte_count += nread;
+    unsigned int packet_no = parse_packet_no(tmp);
+    if(packet_no >= packet_start && packet_no < packet_end) {
+    //ED_LOG("\nrepeat: %d, start: %d, end: %d, recv_packet_no: %d, recv_packet_count: %d, nread:%d, total: %ld, data_size: %ld",
+     //  	    repeat, packet_start, packet_end, packet_no, resp->recv_packet_count, nread, resp->recv_data_size, resp->data_size);
+	    memcpy(resp->data + resp->recv_data_size, tmp + 8, nread - 8);
+	    resp->recv_data_size += (nread - 8);
+	    resp->recv_packet_count += 1;
+    }
+
+    // continue read until 
+    if(packet_no < packet_start) {};
+
+    if(packet_no >= packet_end - 1) {
+	    break;
+    }
   }
 
-  return received_byte_count;
+  return START_RECV_SUCCESS;
 }
 
 size_t 
@@ -213,7 +224,7 @@ start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
 
   // for each sample
   for (; sample_index < c->repeat_count; sample_index++) {
-    int packet_count = _package_count_of_each_repeat(c);
+    int packet_count = _packet_count_of_each_repeat(c);
     unsigned int packet_index = 0;
     while(packet_index < packet_count) {
       int nread = _read(addr, tmp, MTU);
@@ -286,7 +297,7 @@ package_count(config_t *c) {
   ED_LOG("package_count: %s", c->device_ip);
   assert(c);
 
-  return _package_count_of_each_repeat(c) * c->repeat_count;
+  return _packet_count_of_each_repeat(c) * c->repeat_count;
 }
 
 unsigned int
@@ -302,7 +313,7 @@ unsigned int repeat_bytes_count(config_t *c) {
 }
 //////////////////////////// STATIC FUNCTIONS ///////////////////
 static unsigned int
-_package_count_of_each_repeat(config_t *c) {
+_packet_count_of_each_repeat(config_t *c) {
   return ceil(repeat_bytes_count(c) / (float)MTU);
 }
 

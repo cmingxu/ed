@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <stdio.h>
 
 #include "ed.h"
@@ -9,9 +10,9 @@ int main(int argc, const char *argv[])
 {
   config_t *cfg = (config_t *)malloc(sizeof(config_t));
   load_default_config(cfg);
-
-  /*c1->sample_count = 100000;*/
-  /*c1->repeat_count = 50;*/
+  cfg->sample_count = 880000;
+  cfg->delay_count = 453333;
+  cfg->repeat_count = 30;
 
   // 连接设备
   addr_t *addr = (addr_t *)malloc(sizeof(addr_t));
@@ -43,8 +44,26 @@ int main(int argc, const char *argv[])
 
   // 通知设备开始采集
   start_collect(cfg, addr);
-  size_t nread = start_recv(cfg, addr, buf, bytes_count(cfg));
-  printf("received bytes count %ld\n", nread);
+  for(unsigned int i = 0; i < cfg->repeat_count; i++) {
+	repeat_response_t *resp = (repeat_response_t *)malloc(sizeof(repeat_response_t));
+	void *p = (void *)malloc(repeat_bytes_count(cfg));
+	if(!p) {
+		perror("1123");
+		exit(1);
+	}
+	resp->data = p;
+	resp->data_size = repeat_bytes_count(cfg);
+  	size_t nread = start_recv_by_repeat(cfg, addr, resp, i);
+  	printf("received bytes count %ld\n", resp->recv_data_size);
+  	printf("received packet count %ld\n", resp->recv_packet_count);
+  	printf("expect packet count %ld\n", resp->packet_count);
+	free(resp->data);
+	free(resp);
+  }
+
+  printf("repeat_bytes_count %d\n", repeat_bytes_count(cfg));
+  printf("sample count %d\n", cfg->sample_count);
+  printf("repeat count %d\n", cfg->repeat_count);
 
   // 清理环境/断开连接
   free(buf);
