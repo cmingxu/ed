@@ -53,7 +53,7 @@ int main(int argc, const char *argv[])
 	}
 	resp->data = p;
 	resp->data_size = repeat_bytes_count(cfg);
-  	size_t nread = start_recv_by_repeat(cfg, addr, resp, i);
+  	size_t nread = start_recv_by_repeat(cfg, addr, resp, i, 500);
   	printf("received bytes count %ld\n", resp->recv_data_size);
   	printf("received packet count %ld\n", resp->recv_packet_count);
   	printf("expect packet count %ld\n", resp->packet_count);

@@ -149,10 +149,11 @@ int stop_collect(config_t *, addr_t *);
 // @param - addr_t 地址
 // @param - repeat_response_t 回包结构，data字段需要提前申请内存
 // @param - repeat 从0 - c->repeat_count顺序增加，如果从设备接受的packet不属于此范围则丢弃
+// @param - timeout read timeout
 #define START_RECV_SUCCESS 10000
 #define START_RECV_PACKET_LOSS 10001
 #define START_RECV_INVALID_PACKET_LEN 10002
-int start_recv_by_repeat(config_t *, addr_t *, repeat_response_t *, unsigned int repeat);
+int start_recv_by_repeat(config_t *, addr_t *, repeat_response_t *, unsigned int repeat, unsigned int timeout);
 
 // 开始数据接收 - 存入内存
 size_t start_recv(config_t *, addr_t *, void *buf, size_t size);

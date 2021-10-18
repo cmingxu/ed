@@ -155,7 +155,7 @@ start_collect(config_t *c, addr_t *addr){
 }
 
 int 
-start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigned int repeat){
+start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigned int repeat, unsigned int timeout){
   ED_LOG("start_recv_by_repeat: %s, repeat %d, resp->data_size: %ld", c->device_ip, repeat, resp->data_size);
 
   assert(resp->data);
@@ -169,7 +169,7 @@ start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigne
   resp->packet_count = _packet_count_of_each_repeat(c);
   memset(resp->data, '\0', resp->data_size);
 
-  _settimeout(addr, 100);
+  _settimeout(addr, timeout);
 
   char tmp[MTU + 8];
   for (;;) {
