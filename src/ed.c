@@ -26,7 +26,6 @@ static size_t _write(addr_t *, char *buf, size_t);
 static size_t _read(addr_t *, char *buf, size_t);
 static void _settimeout(addr_t *, unsigned int);
 static void _setbuf(addr_t *);
-static unsigned int _packet_count_of_each_repeat(config_t *c);
 
 int 
 establish_connection(config_t *c, addr_t *addr) {
@@ -163,10 +162,10 @@ start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigne
   resp->recv_data_size = 0;
   resp->recv_packet_count = 0;
 
-  unsigned int packet_start = _packet_count_of_each_repeat(c) * repeat;
-  unsigned int packet_end = _packet_count_of_each_repeat(c) * (repeat + 1);
+  unsigned int packet_start = packet_count_of_each_repeat(c) * repeat;
+  unsigned int packet_end = packet_count_of_each_repeat(c) * (repeat + 1);
 
-  resp->packet_count = _packet_count_of_each_repeat(c);
+  resp->packet_count = packet_count_of_each_repeat(c);
   memset(resp->data, '\0', resp->data_size);
 
   _settimeout(addr, timeout);
@@ -189,8 +188,8 @@ start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigne
     if(packet_no >= packet_start && packet_no < packet_end) {
     //ED_LOG("\nrepeat: %d, start: %d, end: %d, recv_packet_no: %d, recv_packet_count: %d, nread:%d, total: %ld, data_size: %ld",
      //  	    repeat, packet_start, packet_end, packet_no, resp->recv_packet_count, nread, resp->recv_data_size, resp->data_size);
-	    memcpy(resp->data + resp->recv_data_size, tmp + 8, nread - 8);
-	    resp->recv_data_size += (nread - 8);
+	    memcpy(resp->data + resp->recv_data_size, tmp, nread);
+	    resp->recv_data_size += nread;
 	    resp->recv_packet_count += 1;
     }
 
@@ -205,58 +204,6 @@ start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigne
   return START_RECV_SUCCESS;
 }
 
-size_t 
-start_recv(config_t *c, addr_t *addr, void *buf, size_t size){
-  ED_LOG("start_recv: %s", c->device_ip);
-
-  unsigned int received_byte_count = 0;
-  unsigned int expected_byte_count = repeat_bytes_count(c) * c->repeat_count;
-  unsigned int sample_index = 0;
-
-  if(size < expected_byte_count) {
-    ED_LOG("buf size not big enough, expected %d", expected_byte_count);
-    return 0;
-  }
-  memset(buf, '\0', size);
-
-  char tmp[MTU];
-  _settimeout(addr, 5000);
-
-  // for each sample
-  for (; sample_index < c->repeat_count; sample_index++) {
-    int packet_count = _packet_count_of_each_repeat(c);
-    unsigned int packet_index = 0;
-    while(packet_index < packet_count) {
-      int nread = _read(addr, tmp, MTU);
-
-      /*usleep(10);*/
-      if(nread == -1) {
-        ED_LOG("start_recv failed:%s", strerror(errno));
-        return received_byte_count;
-      }
-
-      // if packet size 32 and not last packet, should be stop_collect response
-      if(nread == 32 && packet_index != ( packet_count -1)) {
-        char expected[8];
-        _pack_char_arr(expected, CODE_STOP_COLLECT_RESPONSE, 8);
-        _debug_hex(tmp, 32);
-        if(memcmp(tmp, expected, 8) != 0 ) {
-          ED_LOG("stop_collect response received while receiving normal data %s", "");
-          return received_byte_count;
-        }
-      }
-
-      /*ED_LOG("sample_index %d, nread %d, received_byte_count: %d, packet_count %d, packet_index: %d", */
-      /*sample_index, nread, received_byte_count, packet_count, packet_index);*/
-      memcpy(buf + received_byte_count, tmp, nread);
-      received_byte_count += nread;
-      packet_index += 1;
-    }
-  }
-
-  ED_LOG("total received bytes count %d\n", received_byte_count);
-  return received_byte_count;
-}
 
 // 停止采集
 // NOTES: stop_collect response take more then 1s to return
@@ -297,7 +244,7 @@ package_count(config_t *c) {
   ED_LOG("package_count: %s", c->device_ip);
   assert(c);
 
-  return _packet_count_of_each_repeat(c) * c->repeat_count;
+  return packet_count_of_each_repeat(c) * c->repeat_count;
 }
 
 unsigned int
@@ -311,12 +258,17 @@ bytes_count(config_t *c) {
 unsigned int repeat_bytes_count(config_t *c) {
   return  c->sample_count * 2 * c->ad_channel;
 }
-//////////////////////////// STATIC FUNCTIONS ///////////////////
-static unsigned int
-_packet_count_of_each_repeat(config_t *c) {
+
+unsigned int repeat_bytes_count_with_heading(config_t *c) {
+  return  repeat_bytes_count(c) + packet_count_of_each_repeat(c) * 8;
+}
+
+unsigned int
+packet_count_of_each_repeat(config_t *c) {
   return ceil(repeat_bytes_count(c) / (float)MTU);
 }
 
+//////////////////////////// STATIC FUNCTIONS ///////////////////
 static int
 _pack_config(config_t *c, char *packed) {
   char *pos = packed;

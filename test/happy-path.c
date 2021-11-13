@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "ed.h"
+#include "utils.h"
 
 int main(int argc, const char *argv[])
 {
@@ -46,22 +47,23 @@ int main(int argc, const char *argv[])
   start_collect(cfg, addr);
   for(unsigned int i = 0; i < cfg->repeat_count; i++) {
 	repeat_response_t *resp = (repeat_response_t *)malloc(sizeof(repeat_response_t));
-	void *p = (void *)malloc(repeat_bytes_count(cfg));
+	void *p = (void *)malloc(repeat_bytes_count_with_heading(cfg));
 	if(!p) {
 		perror("1123");
 		exit(1);
 	}
 	resp->data = p;
-	resp->data_size = repeat_bytes_count(cfg);
+	resp->data_size = repeat_bytes_count_with_heading(cfg);
   	size_t nread = start_recv_by_repeat(cfg, addr, resp, i, 500);
   	printf("received bytes count %ld\n", resp->recv_data_size);
   	printf("received packet count %ld\n", resp->recv_packet_count);
   	printf("expect packet count %ld\n", resp->packet_count);
+  	_debug_hex(resp->data, 16);
 	free(resp->data);
 	free(resp);
   }
 
-  printf("repeat_bytes_count %d\n", repeat_bytes_count(cfg));
+  printf("repeat_bytes_count %d\n", repeat_bytes_count_with_heading(cfg));
   printf("sample count %d\n", cfg->sample_count);
   printf("repeat count %d\n", cfg->repeat_count);
 

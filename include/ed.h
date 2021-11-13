@@ -116,12 +116,16 @@ int load_config(config_t*, FILE *);
 
 // 计算数据包数量
 unsigned int package_count(config_t *);
+unsigned int packet_count_of_each_repeat(config_t *c);
 
 // 计算数据bytecount
 unsigned int bytes_count(config_t *);
 
 // 计算数据每个repeat的数据大小
 unsigned int repeat_bytes_count(config_t *);
+
+// 计算数据每个repeat的数据大小heading includes
+unsigned int repeat_bytes_count_with_heading(config_t *);
 
 // 初始化socket链接
 #define ESTABLISH_CONNECTION_SUCCESS 0
@@ -154,9 +158,6 @@ int stop_collect(config_t *, addr_t *);
 #define START_RECV_PACKET_LOSS 10001
 #define START_RECV_INVALID_PACKET_LEN 10002
 int start_recv_by_repeat(config_t *, addr_t *, repeat_response_t *, unsigned int repeat, unsigned int timeout);
-
-// 开始数据接收 - 存入内存
-size_t start_recv(config_t *, addr_t *, void *buf, size_t size);
 
 
 #ifdef ED_DEBUG
