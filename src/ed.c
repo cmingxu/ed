@@ -175,29 +175,29 @@ start_recv_by_repeat(config_t *c, addr_t *addr, repeat_response_t *resp, unsigne
     int nread = _read(addr, tmp, MTU + 8);
 
     if(nread == -1) {
-      ED_LOG("start_recv failed:%s", strerror(errno));
-	    return START_RECV_INVALID_PACKET_LEN;
+      ED_LOG("start_recv failed:%s, %d, %d", strerror(errno), errno, errno == EAGAIN);
+      return START_RECV_INVALID_PACKET_LEN;
     }
 
     if(nread < 8) {
       ED_LOG("start_recv failed: nead length less than %d", 8);
-	    return START_RECV_INVALID_PACKET_LEN;
+      return START_RECV_INVALID_PACKET_LEN;
     }
 
     unsigned int packet_no = parse_packet_no(tmp);
     if(packet_no >= packet_start && packet_no < packet_end) {
-    //ED_LOG("\nrepeat: %d, start: %d, end: %d, recv_packet_no: %d, recv_packet_count: %d, nread:%d, total: %ld, data_size: %ld",
-     //  	    repeat, packet_start, packet_end, packet_no, resp->recv_packet_count, nread, resp->recv_data_size, resp->data_size);
-	    memcpy(resp->data + resp->recv_data_size, tmp, nread);
-	    resp->recv_data_size += nread;
-	    resp->recv_packet_count += 1;
+      //ED_LOG("\nrepeat: %d, start: %d, end: %d, recv_packet_no: %d, recv_packet_count: %d, nread:%d, total: %ld, data_size: %ld",
+      //  	    repeat, packet_start, packet_end, packet_no, resp->recv_packet_count, nread, resp->recv_data_size, resp->data_size);
+      memcpy(resp->data + resp->recv_data_size, tmp, nread);
+      resp->recv_data_size += nread;
+      resp->recv_packet_count += 1;
     }
 
     // continue read until 
     if(packet_no < packet_start) {};
 
     if(packet_no >= packet_end - 1) {
-	    break;
+      break;
     }
   }
 
@@ -224,7 +224,15 @@ stop_collect(config_t *c, addr_t *addr){
   _settimeout(addr, 5000);
   // recv connect response
   char stop_collect_resp[32];
-  if(_read(addr, stop_collect_resp, 32) != 32) {
+  int nread;
+AGAIN:
+  nread = _read(addr, stop_collect_resp, 32);
+  if(nread != 32 && errno == EAGAIN) {
+    ED_LOG("read faild: %s", strerror(errno));
+    goto AGAIN;
+  }
+
+  if(nread != 32) {
     ED_LOG("read faild: %s", strerror(errno));
     return STOP_COLLECT_FAIL;
   }
@@ -310,7 +318,6 @@ _write(addr_t *addr, char *buf, size_t size){
 
 static size_t 
 _read(addr_t *addr, char *buf, size_t size){
-  /*ED_LOG("recvfrom %d", addr->socket);*/
   return recvfrom(addr->socket, buf, size, 0, (struct sockaddr*)NULL, NULL);
 }
 
